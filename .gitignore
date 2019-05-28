@@ -1,0 +1,19 @@
+*~
+*.o
+*.d
+*.bin
+*.elf
+*.hex
+*.srec
+*.list
+*.map
+*.stylecheck
+generated.*.ld
+.gdb_history
+.DS_Store
+*.log
+
+# ignore eclipse local(?) settings
+**/.settings/*.core.prefs
+**/.settings/language.settings.xml
+**/.settings/*.prefs
