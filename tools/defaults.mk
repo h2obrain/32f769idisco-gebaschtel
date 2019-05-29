@@ -10,11 +10,11 @@
 #  OELF,OMAP,OBIN,OHEX,OSREC,OLIST
 #  ...
 
+ifndef DEFAULTS_MK
+
 ifndef TOP_DIR
 $(error TOP_DIR needs to be set before including defaults.mk)
 endif
-
-ifndef DEFAULTS_MK
 
 # Be silent per default, but 'make V=1' will show all compiler calls.
 ifeq ($(filter-out 0,$(V)),)
@@ -39,7 +39,7 @@ OHEX        ?=$(BIN_DIR)/$(TARGET).hex
 OSREC       ?=$(BIN_DIR)/$(TARGET).srec
 OLIST       ?=$(BIN_DIR)/$(TARGET).list
 
-OPENCM3_DIR ?=$(TOP_DIR)/libopencm3
+OPENCM3_DIR ?=$(TOP_DIR)/lib/opencm3
 
 ####################################################################
 # Executables
@@ -85,8 +85,8 @@ STFLASH ?= st-flash
 ##LDLIBS:=$(LDLIBS_)
 ##LIBDEPS:=$(LIBDEPS_)
 
-LDSCRIPT     ?= $(OBJ_DIR)/generated.$(DEVICE).ld
-DEVICES_DATA ?= $(OPENCM3_DIR)/ld/devices.data
+LDSCRIPT       ?= $(OBJ_DIR)/generated.$(DEVICE).ld
+DEVICES_DATA   ?= $(OPENCM3_DIR)/ld/devices.data
 
 ifeq ($(DEVICE),)
 $(error no DEVICE specified for linker script generator)
@@ -102,18 +102,18 @@ genlink_fpu       :=$(shell $(OPENCM3_DIR)/scripts/genlink.py $(DEVICES_DATA) $(
 genlink_cppflags  :=$(shell $(OPENCM3_DIR)/scripts/genlink.py $(DEVICES_DATA) $(DEVICE) CPPFLAGS)
 
 ifndef ARCH_FLAGS
-ARCH_FLAGS    = -mcpu=$(genlink_cpu)
+ARCH_FLAGS     = -mcpu=$(genlink_cpu)
 ifeq ($(genlink_cpu),$(filter $(genlink_cpu),cortex-m0 cortex-m0plus cortex-m3 cortex-m4 cortex-m7))
-ARCH_FLAGS   += -mthumb
+ARCH_FLAGS    += -mthumb
 endif
 ifeq ($(genlink_fpu),soft)
-ARCH_FLAGS   += -msoft-float
+ARCH_FLAGS    += -msoft-float
 else ifeq ($(genlink_fpu),hard-fpv4-sp-d16)
-ARCH_FLAGS   += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+ARCH_FLAGS    += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 else ifeq ($(genlink_fpu),hard-fpv5-sp-d16)
-ARCH_FLAGS   += -mfloat-abi=hard -mfpu=fpv5-sp-d16
+ARCH_FLAGS    += -mfloat-abi=hard -mfpu=fpv5-sp-d16
 else ifeq ($(genlink_fpu),hard-fpv5-dp-d16)
-ARCH_FLAGS   += -mfloat-abi=hard -mfpu=fpv5-d16
+ARCH_FLAGS    += -mfloat-abi=hard -mfpu=fpv5-d16
 else
 $(error No match for the FPU flags)
 endif
@@ -127,66 +127,66 @@ endif
 
 # C flags
 ifndef CFLAGS_MK
-CFLAGS_MK  = $(OPT) $(CSTD) $(DEBUG)
-CFLAGS_MK += $(ARCH_FLAGS)
-CFLAGS_MK += -Wextra -Wshadow -Wimplicit-function-declaration
-CFLAGS_MK += -Wredundant-decls -Wmissing-prototypes -Wstrict-prototypes
-CFLAGS_MK += -Wno-packed-bitfield-compat
-CFLAGS_MK += -fno-common -ffunction-sections -fdata-sections
+CFLAGS_MK     = $(OPT) $(CSTD) $(DEBUG)
+CFLAGS_MK    += $(ARCH_FLAGS)
+CFLAGS_MK    += -Wextra -Wshadow -Wimplicit-function-declaration
+CFLAGS_MK    += -Wredundant-decls -Wmissing-prototypes -Wstrict-prototypes
+CFLAGS_MK    += -Wno-packed-bitfield-compat
+CFLAGS_MK    += -fno-common -ffunction-sections -fdata-sections
 endif
 
 # C++ flags
 ifndef CXXFLAGS_MK
-CXXFLAGS_MK  = $(OPT) $(CXXSTD) $(DEBUG)
-CXXFLAGS_MK += $(ARCH_FLAGS)
-CXXFLAGS_MK += -Wextra -Wshadow -Wredundant-decls  -Weffc++
-CXXFLAGS_MK += -fno-common -ffunction-sections -fdata-sections
+CXXFLAGS_MK   = $(OPT) $(CXXSTD) $(DEBUG)
+CXXFLAGS_MK  += $(ARCH_FLAGS)
+CXXFLAGS_MK  += -Wextra -Wshadow -Wredundant-decls  -Weffc++
+CXXFLAGS_MK  += -fno-common -ffunction-sections -fdata-sections
 endif
 
 # C & C++ preprocessor common flags
 ifndef CPPFLAGS_MK
-CPPFLAGS_MK  = -MD
-CPPFLAGS_MK += -Wall -Wundef
-CPPFLAGS_MK += $(DEFS)
+CPPFLAGS_MK   = -MD
+CPPFLAGS_MK  += -Wall -Wundef
+CPPFLAGS_MK  += $(DEFS)
 ifneq ($(filter-out 0 false,USE_LTO),)
-CPPFLAGS_MK += -flto
+CPPFLAGS_MK  += -flto
 endif
-CPPFLAGS_MK += $(genlink_cppflags)
+CPPFLAGS_MK  += $(genlink_cppflags)
 endif
 
 # Assembler flags
 ifndef ASMFLAGS_MK
-ASMFLAGS_MK  = $(STD) $(OPT)
+ASMFLAGS_MK   = $(STD) $(OPT)
 ifeq ($(genlink_cpu),$(filter $(genlink_cpu),cortex-m0 cortex-m0plus cortex-m3 cortex-m4 cortex-m7))
-ASMFLAGS_MK += -mthumb-interwork -mthumb
+ASMFLAGS_MK  += -mthumb-interwork -mthumb
 endif
-ASMFLAGS_MK += -fno-builtin
-ASMFLAGS_MK += -Wall
+ASMFLAGS_MK  += -fno-builtin
+ASMFLAGS_MK  += -Wall
 endif
 
 # Linker flags
 ifndef LDFLAGS_MK
-LDFLAGS_MK   = --static -nostartfiles
-LDFLAGS_MK  += -T$(LDSCRIPT)
-LDFLAGS_MK  += $(ARCH_FLAGS) $(DEBUG)
+LDFLAGS_MK    = --static -nostartfiles
+LDFLAGS_MK   += -T$(LDSCRIPT)
+LDFLAGS_MK   += $(ARCH_FLAGS) $(DEBUG)
 ifneq ($(filter-out 0 false,USE_LTO),)
-LDFLAGS_MK  += -flto -fuse-linker-plugin
+LDFLAGS_MK   += -flto -fuse-linker-plugin
 endif
-LDFLAGS_MK  += -Wl,-Map=$(OMAP) -Wl,--cref
-LDFLAGS_MK  += -Wl,--gc-sections
+LDFLAGS_MK   += -Wl,-Map=$(OMAP) -Wl,--cref
+LDFLAGS_MK   += -Wl,--gc-sections
 ifeq ($(V),99)
-LDFLAGS_MK  += --print-gc-sections
+LDFLAGS_MK   += --print-gc-sections
 endif
-LDFLAGS_MK  += -Wl,--fatal-warnings
+LDFLAGS_MK   += -Wl,--fatal-warnings
 endif
 
 
 ############################
 # always needed libraries
 
-LDLIBS      += -Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group
+LDLIBS       += -Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group
 
-# paths to search for lib-related .mk-files
-#LIB_SRC_DIRS += ...
+# paths to search for lib-related .mk-files (relative to the top-dir)
+LIB_SRC_DIRS += lib
 
 endif

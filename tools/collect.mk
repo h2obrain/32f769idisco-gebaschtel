@@ -45,10 +45,6 @@ OBJ_DIR_LOCAL=$(OBJ_DIR)/$(CURDIR_FROM_TOP)
 # Add possibility to include everything relative to TOP_DIR
 #INCLUDES += -I$(TOP_DIR)
 
-# libopencm3 build targets and sources
-INCLUDES +=-I$(OPENCM3_DIR)/include
-include $(TOP_DIR)/tools/opencm3.mk
-
 # Initialize ignored sources
 ifndef IGNORED_SRCS
 IGNORED_SRCS:=
@@ -99,7 +95,7 @@ SOURCES_DIRS_COLLECTED:=$(filter-out $(IGNORED_SOURCES_DIRS_COLLECTED),$(sort $(
 
 ############################
 # Find header files (INCS) recursively
-INCS+=$(foreach DIR,$(INCLUDE_DIRS_COLLECTED),$(call rwildcard,$(TOP_DIR)$(DIR)/,*.h))
+#INCS+=$(foreach DIR,$(INCLUDE_DIRS_COLLECTED),$(call rwildcard,$(TOP_DIR)$(DIR)/,*.h))
 # Find source files (SRCS) for different file endings
 SOURCE_FILE_ENDINGS := c cxx cpp s
 SRCS+=$(foreach EXT,$(SOURCE_FILE_ENDINGS),$(foreach DIR,$(SOURCES_DIRS_COLLECTED),$(wildcard $(TOP_DIR)$(DIR)/*.$(EXT))))
@@ -111,12 +107,8 @@ $1:=$$(realpath $$(filter $$(addprefix %,$$(SOURCE_FILE_ENDINGS)), $$($1)))
 $1:=$$(patsubst $$(CURDIR)/%,%,$$($1))
 $1:=$$(patsubst $$(TOP_DIR_REAL)%,$$(TOP_DIR)%,$$($1))
 $1:=$$(sort $$($1))
-#SRCS:=$(realpath $(filter $(addprefix %,$(SOURCE_FILE_ENDINGS)), $(SRCS)))
-#SRCS:=$(patsubst $(CURDIR)/%,%,$(SRCS))
-#SRCS:=$(patsubst $(TOP_DIR_REAL)%,$(TOP_DIR)%,$(SRCS))
-#SRCS:=$(sort $(SRCS))
 endef
-$(eval $(call CLEANUP_LIST,INCS))
+#$(eval $(call CLEANUP_LIST,INCS))
 $(eval $(call CLEANUP_LIST,SRCS))
 
 # filter
@@ -155,7 +147,7 @@ FILES_TO_CLEAN   := $(patsubst $(CURDIR)/%,%,$(realpath $(OELF) $(OMAP) $(OBIN) 
 $(foreach V,$(sort $(dir $(FILES_TO_CLEAN))),$(eval FOLDERS_TO_CLEAN:=$(V) $(FOLDERS_TO_CLEAN)))
 #FILES_TO_CLEAN   := $(wildcard $(FILES_TO_CLEAN)) << this is done by realpath
 #$(info before: $(FOLDERS_TO_CLEAN))
-FOLDERS_TO_CLEAN := $(wildcard $(FOLDERS_TO_CLEAN))
+FOLDERS_TO_CLEAN := $(patsubst %/,%,$(wildcard $(FOLDERS_TO_CLEAN)))
 #$(info after: $(FOLDERS_TO_CLEAN))
 
 ############################

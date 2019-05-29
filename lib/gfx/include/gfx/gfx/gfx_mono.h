@@ -1,0 +1,17 @@
+/*
+ * gfx_monochrome.h
+ *
+ *  Created on: 6 Aug 2017
+ *      Author: Oliver Meier
+ */
+
+#ifndef GFX_MONOCHROME_H_
+#define GFX_MONOCHROME_H_
+
+#include <gfx/gfx_config.h>
+
+#define GFX_COLOR_MODE GFX_COLOR_MODE_MONOCHROME
+#include "../../../src/gfx/gfx_header.h"
+#undef GFX_COLOR_MODE
+
+#endif /* GFX_MONOCHROME_H_ */

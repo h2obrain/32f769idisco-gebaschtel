@@ -1,6 +1,4 @@
 /*
- * This file is part of the libopencm3 project.
- *
  * Copyright (C) 2019 Oliver Meier <h2obrain@gmail.com>
  *
  * This library is free software: you can redistribute it and/or modify
@@ -32,8 +30,8 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/exti.h>
 #include "support/system.h"
-#include "clock.h"
-#include "sdram.h"
+#include <support/clock.h>
+#include "drivers/sdram.h"
 #include "drivers/display.h"
 
 /**

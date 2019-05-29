@@ -16,7 +16,7 @@
 #  SRCS
 # List of files to be $(filter-out IGNORED_SRCS, SRCS) after all source-files were collected
 #  IGNORED_SRCS
-# List of include files (only .h supported!)
+# List of include files (only .h) - disabled
 #  INCS
 # Custom build recipe dependencies
 #  DEPS
@@ -29,6 +29,10 @@ ifndef TOP_DIR
 $(error TOP_DIR needs to be set before including rules.mk)
 endif
 
+# default target
+all:  elf
+
+# find all needed file/etc
 include $(TOP_DIR)/tools/collect.mk
 
 ############################
@@ -39,10 +43,8 @@ include $(TOP_DIR)/tools/collect.mk
 .SECONDEXPANSION:
 .SECONDARY:
 #.ONESHELL:
-
 .PHONY: all elf bin hex srec list clean flash stlink-flash
 
-all:  elf
 elf:  $(OELF)
 #map:  $(OMAP)
 bin:  $(OBIN)

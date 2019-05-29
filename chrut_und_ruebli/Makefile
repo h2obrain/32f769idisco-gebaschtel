@@ -1,10 +1,14 @@
 TARGET  = chruut_und_ruebli
 
-# Find source files (SRCS) for different file endings
-SRCS   += $(wildcard *.c)
-SOURCES_DIRS += support
+# Find source files for different file endings
+# in a path relative to this Makefile
+SOURCES_DIRS += .
 SOURCES_DIRS += drivers
-SOURCES_DIRS += gfx/fonts gfx/gfx gfx/vector_gfx
+INCLUDE_DIRS += config
+
+# paths to search for lib-related .mk-files (relative to the top-dir)
+LIB_SRC_DIRS += lib/support lib/drivers lib/gfx
+
  
 DEVICE   = stm32f769nih6
 
