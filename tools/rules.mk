@@ -131,7 +131,7 @@ ifeq ($(BMP_PORT),)
 ifeq ($(OOCD_FILE),)
 flash: $(OELF)
 	@printf "  FLASH   $<\n"
-	(echo "halt; program $(realpath $(OELF)) verify reset" | nc -4 localhost 4444 2>/dev/null) || \
+	$(Q)(echo "halt; program $(realpath $(OELF)) verify reset" | nc -4 localhost 4444 2>/dev/null) || \
 		$(OOCD) -f interface/$(OOCD_INTERFACE).cfg \
 		-f target/$(OOCD_TARGET).cfg \
 		-c "program $(OELF) verify reset exit" \
@@ -139,7 +139,7 @@ flash: $(OELF)
 else
 flash: $(OELF)
 	@printf "  FLASH   $<\n"
-	(echo "halt; program $(realpath $(OELF)) verify reset" | nc -4 localhost 4444 2>/dev/null) || \
+	$(Q)(echo "halt; program $(realpath $(OELF)) verify reset" | nc -4 localhost 4444 2>/dev/null) || \
 		$(OOCD) -f $(OOCD_FILE) \
 		-c "program $(OELF) verify reset exit" \
 		$(NULL)
@@ -147,12 +147,11 @@ endif
 else
 flash: $(OELF)
 	@printf "  GDB   $(OELF) (flash)\n"
-	$(GDB) --batch \
+	$(Q)$(GDB) --batch \
 		   -ex 'target extended-remote $(BMP_PORT)' \
 		   -x $(EXAMPLES_SCRIPT_DIR)/black_magic_probe_flash.scr \
 		   $(OELF)
 endif
-
 stlink-flash: $(OBIN)
 	@printf "  FLASH  $<\n"
-	$(STFLASH) write $(OBIN) 0x8000000
+	$(Q)$(STFLASH) write $(OBIN) 0x8000000
