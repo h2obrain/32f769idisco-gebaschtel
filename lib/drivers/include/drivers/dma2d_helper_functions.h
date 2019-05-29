@@ -55,6 +55,7 @@ typedef struct {
 
 /* */
 void dma2d_init(void);
+void dma2d_set_ahb_master_timer(uint8_t num_cycles);
 /* ltdc interoperability */
 void dma2d_setup_ltdc_pixel_buffer(display_layer_t layer, dma2d_pixel_buffer_t *pxbuf);
 /* */
@@ -79,14 +80,21 @@ void dma2d_convert_copy(
 		int16_t dx, int16_t dy,
 		int16_t w, int16_t h
 	);
-void dma2d_convert_blenddst_copy(
+void dma2d_convert_copy__no_pxsrc_fix(
 		dma2d_pixel_buffer_t *pxsrc,
 		dma2d_pixel_buffer_t *pxdst,
 		int16_t sx, int16_t sy,
 		int16_t dx, int16_t dy,
 		int16_t w, int16_t h
 	);
-void dma2d_convert_blenddst_copy_no_pxsrc_fix(
+void dma2d_convert_blenddst(
+		dma2d_pixel_buffer_t *pxsrc,
+		dma2d_pixel_buffer_t *pxdst,
+		int16_t sx, int16_t sy,
+		int16_t dx, int16_t dy,
+		int16_t w, int16_t h
+	);
+void dma2d_convert_blenddst__no_pxsrc_fix(
 		dma2d_pixel_buffer_t *pxsrc,
 		dma2d_pixel_buffer_t *pxdst,
 		int16_t sx, int16_t sy,

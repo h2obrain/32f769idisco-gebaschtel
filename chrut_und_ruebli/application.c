@@ -344,7 +344,7 @@ int main(void)
 						dma2d_convert_copy(&pxsrc_fg,&pxdst,sx_fg,sy_fg,dx,dy,w,h);
 						break;
 					case 2:
-						dma2d_convert_blenddst_copy(&pxsrc_fg,&pxdst,sx_fg,sy_fg,dx,dy,w,h);
+						dma2d_convert_blenddst(&pxsrc_fg,&pxdst,sx_fg,sy_fg,dx,dy,w,h);
 						break;
 					case 3:
 						dma2d_convert_blend_copy(&pxsrc_fg,&pxsrc_bg,&pxdst,sx_fg,sy_fg,sx_bg,sy_bg,dx,dy,w,h);
@@ -357,8 +357,9 @@ int main(void)
 //#define font font_Tamsyn10x20b_20
 #define font font_DejaVuSansMono_36
 				dma2d_fill(&pxdst, 0, 10,10,strnlen(buf,256)*font.charwidth,font.lineheight);
-				dma2d_wait_complete();
-				gfx_puts2(10,10,buf,&font,(gfx_color_t){.argb8888.c=0xff000000});
+//				dma2d_wait_complete();
+				gfx_set_font_blending(false);
+				gfx_puts2(10,10,buf,&font,(gfx_color_t){.argb8888.c=0x000000});
 
 				display_update();
 //				while(1);

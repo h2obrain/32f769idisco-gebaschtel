@@ -1364,15 +1364,25 @@ void GFX_FCT(draw_char)(
 	__gfx_state.font_pxbuf.width  = cp->bbox.x2-cp->bbox.x1;
 	__gfx_state.font_pxbuf.height = cp->bbox.y2-cp->bbox.y1;
 	__gfx_state.font_pxbuf.in.pixel.alpha_mode.color = col.raw;
-	dma2d_convert_blenddst_copy_no_pxsrc_fix(
-			&__gfx_state.font_pxbuf,
-			&__gfx_state.surface_pxbuf,
-			0,0,
-			x+cp->bbox.x1,y+cp->bbox.y1,
-			__gfx_state.font_pxbuf.width,
-			__gfx_state.font_pxbuf.height);
+	if (__gfx_state.font_blending) {
+		dma2d_convert_blenddst__no_pxsrc_fix(
+				&__gfx_state.font_pxbuf,
+				&__gfx_state.surface_pxbuf,
+				0,0,
+				x+cp->bbox.x1,y+cp->bbox.y1,
+				__gfx_state.font_pxbuf.width,
+				__gfx_state.font_pxbuf.height);
 
+	} else {
+		dma2d_convert_copy__no_pxsrc_fix(
+				&__gfx_state.font_pxbuf,
+				&__gfx_state.surface_pxbuf,
+				0,0,
+				x+cp->bbox.x1,y+cp->bbox.y1,
+				__gfx_state.font_pxbuf.width,
+				__gfx_state.font_pxbuf.height);
 
+	}
 
 #else
 	const uint32_t *cp_data_p;
@@ -1415,7 +1425,14 @@ void GFX_FCT(set_font_color)(gfx_color_t col)
 #endif
 }
 
-#if !GFX_DMA2D_FONTS
+#if GFX_DMA2D_FONTS
+void GFX_FCT(set_font_blending)(bool enable) {
+	__gfx_state.font_blending = enable;
+}
+bool GFX_FCT(get_font_blending)() {
+	return __gfx_state.font_blending;
+}
+#else
 void GFX_FCT(set_font_scale)(uint8_t s)
 {
 	__gfx_state.font_scale = (s > 0) ? s : 1;

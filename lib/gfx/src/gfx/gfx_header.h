@@ -138,6 +138,7 @@ typedef struct {
 	const font_t *font;
 	void *surface; /* current pixel buffer */
 #if GFX_DMA2D_FONTS
+	bool font_blending;
 	dma2d_pixel_buffer_t surface_pxbuf, font_pxbuf;
 #endif
 } gfx_state_t;
@@ -299,7 +300,10 @@ void GFX_FCT(draw_char)(
 	);
 void GFX_FCT(set_font)(const font_t *font);
 void GFX_FCT(set_font_color)(gfx_color_t col);
-#if !GFX_DMA2D_FONTS
+#if GFX_DMA2D_FONTS
+void GFX_FCT(set_font_blending)(bool enable);
+bool GFX_FCT(get_font_blending)(void);
+#else
 void GFX_FCT(set_font_scale)(uint8_t s);
 uint8_t GFX_FCT(get_font_scale)(void);
 #endif

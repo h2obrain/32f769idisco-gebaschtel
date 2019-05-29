@@ -49,6 +49,22 @@ void display_init(
 
 	/* Init dma2d */
 	dma2d_init();
+	switch (mode) {
+		case DSI_MODE_VIDEO_SYNC_PULSES :
+		case DSI_MODE_VIDEO_SYNC_EVENTS :
+		case DSI_MODE_VIDEO_BURST :
+			dma2d_set_ahb_master_timer(20);
+			break;
+		case DSI_MODE_VIDEO_PATTERN_BER :
+		case DSI_MODE_VIDEO_PATTERN_COLOR_BARS_HORIZONTAL :
+		case DSI_MODE_VIDEO_PATTERN_COLOR_BARS_VERTICAL :
+		case DSI_MODE_ADAPTED_COMMAND_MODE :
+			dma2d_set_ahb_master_timer(0);
+			break;
+		default :
+			assert("Unsupported video mode" && 0);
+			return;
+	}
 
 	/* Setup LTDC clock (PLLSAI)
 	 * Setup Pixel Clock:

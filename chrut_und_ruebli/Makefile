@@ -12,8 +12,8 @@ LIB_SRC_DIRS += lib/support lib/drivers lib/gfx
  
 DEVICE   = stm32f769nih6
 
-USE_LTO  = false
-OPT      = -O0
+#USE_LTO  = false
+#OPT      = -O0
 #OPT     = -O3
 #CFLAGS += -D_GNU_SOURCE
 

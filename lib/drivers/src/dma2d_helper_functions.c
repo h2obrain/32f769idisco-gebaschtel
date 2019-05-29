@@ -20,13 +20,17 @@ void dma2d_init() {
 			    | DMA2D_CR_TWIE | DMA2D_CR_TCIE | DMA2D_CR_TEIE);
 	DMA2D_CR |= DMA2D_CR_CEIE | DMA2D_CR_CAEIE | DMA2D_CR_TEIE;
 	nvic_enable_irq(NVIC_DMA2D_IRQ);
-
-
-	// wait 20 cycles between ahb accesses
+}
+/**
+ * Wait num cycles between ahb accesses
+ * @param num_cycles
+ */
+void dma2d_set_ahb_master_timer(uint8_t num_cycles) {
 	DMA2D_AMTCR |= ~(DMA2D_AMTCR_DT_MASK << DMA2D_AMTCR_DT_SHIFT);
-	DMA2D_AMTCR |= 100 << DMA2D_AMTCR_DT_SHIFT;
+	DMA2D_AMTCR |= num_cycles << DMA2D_AMTCR_DT_SHIFT;
 	DMA2D_AMTCR |= DMA2D_AMTCR_EN;
 }
+
 void dma2d_isr(void) {
 //	uint32_t isr = DMA2D_ISR;
 //	DMA2D_IFCR = isr;
@@ -319,21 +323,14 @@ void dma2d_copy(
 
 	DMA2D_CR |= DMA2D_CR_START;
 }
-void dma2d_convert_copy(
+static inline
+void dma2d_convert_copy_internal(
 		dma2d_pixel_buffer_t *pxsrc,
 		dma2d_pixel_buffer_t *pxdst,
 		int16_t sx, int16_t sy,
 		int16_t dx, int16_t dy,
 		int16_t w, int16_t h
 ) {
-	if (!dma2d_fix_pos_size(
-			&sx,&sy,(int16_t)pxsrc->width,(int16_t)pxsrc->height,
-			NULL,NULL,0,0,
-			&dx,&dy,(int16_t)pxdst->width,(int16_t)pxdst->height,
-			&w,&h
-		)
-	) return;
-
 	dma2d_wait_complete();
 
 	dsi_dma2d_set_input_color_format(pxsrc, &DMA2D_FGPFCCR,&DMA2D_FGCMAR,&DMA2D_FGCOLR);
@@ -349,6 +346,38 @@ void dma2d_convert_copy(
 	while (DMA2D_FGPFCCR & DMA2D_xPFCCR_START);
 
 	DMA2D_CR |= DMA2D_CR_START;
+}
+void dma2d_convert_copy(
+		dma2d_pixel_buffer_t *pxsrc,
+		dma2d_pixel_buffer_t *pxdst,
+		int16_t sx, int16_t sy,
+		int16_t dx, int16_t dy,
+		int16_t w, int16_t h
+) {
+	if (!dma2d_fix_pos_size(
+			&sx,&sy,(int16_t)pxsrc->width,(int16_t)pxsrc->height,
+			NULL,NULL,0,0,
+			&dx,&dy,(int16_t)pxdst->width,(int16_t)pxdst->height,
+			&w,&h
+		)
+	) return;
+	dma2d_convert_copy_internal(pxsrc,pxdst, sx,sy, dx,dy, w,h);
+}
+void dma2d_convert_copy__no_pxsrc_fix(
+		dma2d_pixel_buffer_t *pxsrc,
+		dma2d_pixel_buffer_t *pxdst,
+		int16_t sx, int16_t sy,
+		int16_t dx, int16_t dy,
+		int16_t w, int16_t h
+) {
+	if (!dma2d_fix_pos_size(
+			NULL,NULL,0,0,
+			NULL,NULL,0,0,
+			&dx,&dy,(int16_t)pxdst->width,(int16_t)pxdst->height,
+			&w,&h
+		)
+	) return;
+	dma2d_convert_copy_internal(pxsrc,pxdst, sx,sy, dx,dy, w,h);
 }
 static inline
 void dma2d_convert_blend_copy_internal(
@@ -382,7 +411,7 @@ void dma2d_convert_blend_copy_internal(
 	DMA2D_CR |= DMA2D_CR_START;
 }
 
-void dma2d_convert_blenddst_copy(
+void dma2d_convert_blenddst(
 		dma2d_pixel_buffer_t *pxsrc,
 		dma2d_pixel_buffer_t *pxdst,
 		int16_t sx, int16_t sy,
@@ -398,7 +427,7 @@ void dma2d_convert_blenddst_copy(
 	) return;
 	dma2d_convert_blend_copy_internal(pxsrc,pxdst,pxdst, sx,sy, dx,dy, dx,dy, w,h);
 }
-void dma2d_convert_blenddst_copy_no_pxsrc_fix(
+void dma2d_convert_blenddst__no_pxsrc_fix(
 		dma2d_pixel_buffer_t *pxsrc,
 		dma2d_pixel_buffer_t *pxdst,
 		int16_t sx, int16_t sy,
