@@ -23,11 +23,14 @@
 # CC flags
 #  CFLAGS
 #  INCLUDES
+# FILES_TO_CLEAN
+#  list of files to remove (paths relative where make was executed)
 #############################################################
 # Output
 #  INCS SRCS OBJS ODEPS
 #  OBJ_DIR_LOCAL
 #  ...
+
 
 ifndef TOP_DIR
 $(error TOP_DIR needs to be set before including collect.mk)
@@ -74,6 +77,10 @@ INCLUDE_DIRS_COLLECTED+=$$(foreach DIR,$$(addprefix $$(MKF_DIR)/,$$(INCLUDE_DIRS
 SOURCES_DIRS_COLLECTED+=$$(foreach DIR,$$(addprefix $$(MKF_DIR)/,$$(SOURCES_DIRS)),$$(call CleanPath,$$(TOP_DIR_REAL),$$(DIR)))
 IGNORED_INCLUDE_DIRS_COLLECTED+=$$(foreach DIR,$$(addprefix $$(MKF_DIR)/,$$(IGNORED_INCLUDE_DIRS)),$$(call CleanPath,$$(TOP_DIR_REAL),$$(DIR)))
 IGNORED_SOURCES_DIRS_COLLECTED+=$$(foreach DIR,$$(addprefix $$(MKF_DIR)/,$$(IGNORED_SOURCES_DIRS)),$$(call CleanPath,$$(TOP_DIR_REAL),$$(DIR)))
+# expand variables using $(MKF_DIR). ideally MKF_DIR should be copied locally! like MODULE_MK_DIR:=$(MKF_DIR)
+SRCS:=$$(SRCS)
+IGNORED_SRCS:=$$(IGNORED_SRCS)
+INCS:=$$(INCS)
 endef
 $(foreach MKF,$(MK_FILES_COLLECTED),$(eval $(call BuildDirs,$(MKF))))
 # Cleanup dirs
@@ -102,10 +109,15 @@ SRCS+=$(foreach EXT,$(SOURCE_FILE_ENDINGS),$(foreach DIR,$(SOURCES_DIRS_COLLECTE
 # Cleanup headers/sources
 #INCS:=$(sort $(foreach INC,$(filter %.h, $(INCS)),$(patsubst $(TOP_DIR_REAL)%,$(TOP_DIR)%,$(realpath $(INC)))))
 #SRCS:=$(sort $(foreach SRC,$(filter %.c %.s, $(SRCS)),$(patsubst $(TOP_DIR_REAL)%,$(TOP_DIR)%,$(realpath $(SRC)))))
+
+REALPATH_OR_NOT=$(if $(realpath $(dir $1)),$(realpath $(dir $1))/$(notdir $1),$1)
+#REALPATH_OR_NOT=$(realpath $(dir $1))/$(notdir $1)
 define CLEANUP_LIST
-$1:=$$(realpath $$(filter $$(addprefix %,$$(SOURCE_FILE_ENDINGS)), $$($1)))
-$1:=$$(patsubst $$(CURDIR)/%,%,$$($1))
+$1:=$$(filter $$(addprefix %,$$(SOURCE_FILE_ENDINGS)),$$($1))
+$1:=$$(foreach FILE,$$($1),$$(call REALPATH_OR_NOT,$$(FILE)))
+$$(info $$($1))
 $1:=$$(patsubst $$(TOP_DIR_REAL)%,$$(TOP_DIR)%,$$($1))
+$1:=$$(patsubst $$(CURDIR)/%,%,$$($1))
 $1:=$$(sort $$($1))
 endef
 #$(eval $(call CLEANUP_LIST,INCS))
@@ -142,8 +154,8 @@ ODEPS := $(OBJS:%.o=%.d)
 
 ###########################
 # clean
-#FILES_TO_CLEAN   := $(OELF) $(OMAP) $(OBIN) $(OHEX) $(OSREC) $(OLIST) $(OBJS) $(ODEPS) $(LDSCRIPT)
-FILES_TO_CLEAN   := $(patsubst $(CURDIR)/%,%,$(realpath $(OELF) $(OMAP) $(OBIN) $(OHEX) $(OSREC) $(OLIST) $(OBJS) $(ODEPS) $(LDSCRIPT)))
+FILES_TO_CLEAN   := $(OELF) $(OMAP) $(OBIN) $(OHEX) $(OSREC) $(OLIST) $(OBJS) $(ODEPS) $(LDSCRIPT) $(FILES_TO_CLEAN) 
+FILES_TO_CLEAN   := $(patsubst $(CURDIR)/%,%,$(realpath $(FILES_TO_CLEAN)))
 $(foreach V,$(sort $(dir $(FILES_TO_CLEAN))),$(eval FOLDERS_TO_CLEAN:=$(V) $(FOLDERS_TO_CLEAN)))
 #FILES_TO_CLEAN   := $(wildcard $(FILES_TO_CLEAN)) << this is done by realpath
 #$(info before: $(FOLDERS_TO_CLEAN))

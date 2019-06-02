@@ -12,7 +12,7 @@ LIB_SRC_DIRS += lib/sled_hijack
  
 DEVICE   = stm32f769nih6
 
-USE_LTO  = false
+USE_LTO  = 0
 OPT      = -O0
 #OPT     = -O3
 #CFLAGS += -D_GNU_SOURCE

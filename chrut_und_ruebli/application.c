@@ -181,7 +181,6 @@ typedef struct timer {
 		char **argv;
 	};
 } timer;
-module_t *modules[] = {&gfx_balls};
 #ifndef T_SECOND
 #define T_SECOND 1000*1000
 #endif
@@ -208,10 +207,11 @@ int timer_add(ulong usec,int moduleno, int argc, char* argv[]);
 static int pick_next(int current_modno, ulong in) {
 	int next_mod;
 	for (int i = 0; i < 2; i++) {
-		next_mod = rand()%(sizeof(modules)/sizeof(void*));
+		next_mod = rand()%SLED_MODULE_COUNT;
 		if (next_mod != current_modno)
 			break;
 	}
+	sled_modules[next_mod]->reset(next_mod);
 	return timer_add(in, next_mod, 0, NULL);
 }
 
@@ -295,16 +295,90 @@ int main(void)
 //	}
 
 
-#if defined(DMA2D_SIMPLE) || defined(SLED)
+#ifdef SLED
+	/*
+	 * DMA2D debugging
+	 */
+	display_ltdc_config_begin();
+	display_ltdc_config_layer(DISPLAY_LAYER_1, false);
+	display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 0,0,640,480);
+	display_ltdc_config_end();
+
+	/* Give ltdc time to update its shadow registers! */
+	while (!display_ltdc_config_ready());
+	display_update();
+
+	/* Read back the window settings.. */
+	dma2d_pixel_buffer_t pxdst;
+	display_ltdc_config_begin();
+	display_ltdc_set_background_color(0,0,0);
+//	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_1, &pxdst_layer1);
+	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_2, &pxdst);
+	display_ltdc_config_end();
+
+	gfx_init(layers[1], pxdst.width,pxdst.height);
+
+	dma2d_fill(
+			&pxdst,
+			0, //0xffffffff,
+			0,0, pxdst.width,pxdst.height
+		);
+	while (!display_ltdc_config_ready());
+	display_update();
+
+	srand(systick_get_value());
+
+	timers_init(0);
+	matrix_init(0);
+	for (uint32_t i=0; i<SLED_MODULE_COUNT; i++) {
+		sled_modules[i]->init(i);
+		sled_modules[i]->reset(i);
+	}
+//	modules[0]->reset(0);
+	pick_next(-1, udate());
+//	modules[0]->draw(0);
+	int lastmod = -1;
+	while (1) {
+//		msleep(1);
+		timer tnext = timer_get();
+		if (tnext.moduleno == -1) {
+			// Queue random.
+			pick_next(lastmod, udate() + TIME_SHORT * T_SECOND);
+		} else
+		if (tnext.time > mtime()*1000) {
+			// Early break. Set this timer up for elimination by any 0-time timers that have come along
+			if (tnext.time == 0) tnext.time = 1;
+			timer_add(tnext.time, tnext.moduleno, 0,NULL);
+			continue;
+		} else {
+			int r = sled_modules[tnext.moduleno]->draw(tnext.moduleno);
+			switch (r) {
+				case 0:
+					lastmod = tnext.moduleno;
+					break;
+				case 1:
+					pick_next(lastmod, udate() + T_MILLISECOND);
+					lastmod = -1;
+					break;
+				default :
+					for (uint32_t i=0; i<SLED_MODULE_COUNT; i++) {
+						sled_modules[i]->deinit(i);
+					}
+					while (1);
+					break;
+			}
+		}
+	}
+#endif
+
+#ifdef DMA2D_SIMPLE
 	/*
 	 * DMA2D debugging
 	 */
 	display_ltdc_config_begin();
 	display_ltdc_config_layer(DISPLAY_LAYER_1, false);
 //	display_ltdc_config_windowing_xywh(DISPLAY_LAYER_1, 0,0,100,100);
-#ifdef DMA2D_SIMPLE
 	display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 2,2,796,476);
-#endif
 	display_ltdc_config_end();
 
 	/* Give ltdc time to update its shadow registers! */
@@ -314,12 +388,7 @@ int main(void)
 	/* Read back the window settings.. */
 	dma2d_pixel_buffer_t pxsrc_fg, pxsrc_bg, pxdst, pxdst_layer1;
 	display_ltdc_config_begin();
-#if defined(DMA2D_SIMPLE)
 	display_ltdc_set_background_color(0xff,0xff,0xff);
-//#elif defined(SLED)
-#else
-	display_ltdc_set_background_color(0,0,0);
-#endif
 	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_1, &pxdst_layer1);
 	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_2, &pxdst);
 	display_ltdc_config_end();
@@ -358,145 +427,6 @@ int main(void)
 	srand(systick_get_value());
 #endif
 
-#ifdef SLED
-	timers_init(0);
-	matrix_init(0);
-	for (uint32_t i=0; i<sizeof(modules)/sizeof(void*); i++) {
-		modules[i]->init(i);
-		modules[i]->reset(i);
-	}
-//	modules[0]->reset(0);
-	pick_next(-1, udate());
-//	modules[0]->draw(0);
-	int lastmod = -1;
-	while (1) {
-//		msleep(1);
-		timer tnext = timer_get();
-		if (tnext.moduleno == -1) {
-			// Queue random.
-			pick_next(lastmod, udate() + TIME_SHORT * T_SECOND);
-		} else
-		if (tnext.time > mtime()*1000) {
-			// Early break. Set this timer up for elimination by any 0-time timers that have come along
-			if (tnext.time == 0) tnext.time = 1;
-			timer_add(tnext.time, tnext.moduleno, 0,NULL);
-			continue;
-		} else {
-			int r = modules[tnext.moduleno]->draw(tnext.moduleno);
-			switch (r) {
-				case 0:
-					lastmod = tnext.moduleno;
-					break;
-				case 1:
-					pick_next(lastmod, udate() + T_MILLISECOND);
-					lastmod = -1;
-					break;
-				default :
-					for (uint32_t i=0; i<sizeof(modules)/sizeof(void*); i++) {
-						modules[i]->deinit(i);
-					}
-					while (1);
-					break;
-			}
-		}
-	}
-#endif
-
-#ifdef DMA2D_SIMPLE
-//	jpeg_decode(gebaschtel_jpg,sizeof(gebaschtel_jpg),gebaschtel_out,sizeof(gebaschtel_out));
-
-#define REFRESH_RATE 1000
-	uint64_t timeout = mtime();
-	while (1) {
-		if (display_ready()) {
-			uint64_t time = mtime();
-			if (timeout<=time) {
-				timeout += 1000/REFRESH_RATE;
-				if (timeout<=time) timeout = time + 1000/REFRESH_RATE;
-
-#define FPS_SAMPLE_TIME 1000
-				static double fps = 0;
-				static uint64_t fps_timeout = FPS_SAMPLE_TIME;
-				static uint32_t c = 0;
-				c++;
-				if (fps_timeout<=time) {
-					fps = (double)(1000*c)/(time+FPS_SAMPLE_TIME-fps_timeout);
-					c = 0;
-					fps_timeout = time+FPS_SAMPLE_TIME;
-				}
-
-				update_led_counter();
-
-				int16_t cx,cy,w2,h2;
-				cx = rand()/(RAND_MAX/(pxdst.width/2-6-20+1)); // +1 because we are rounding down
-				cy = rand()/(RAND_MAX/(pxdst.height-8-20+1));
-				w2 = 5+rand()/(RAND_MAX/(5+1));
-				h2 = 5+rand()/(RAND_MAX/(5+1));
-				dma2d_fill(
-						&pxdst,
-						//0xff000000,
-						0xff000000|rand()/(RAND_MAX/0xffffff),
-						4+10+cx-w2,4+10+cy-h2, w2*2,h2*2
-					);
-
-				int16_t sx_fg,sy_fg, sx_bg,sy_bg, dx,dy, w,h;
-				static double angle = 0;
-				double d_dx,d_dy;
-				angle += 1.0/180*M_PI;
-				d_dx = 50*sin(angle);
-				d_dy = 60*cos(angle);
-
-				pxsrc_fg.in.alpha_mod.mode  = DMA2D_xPFCCR_AM_PRODUCT;
-				pxsrc_fg.in.alpha_mod.alpha = 0x22;
-//				pxsrc_fg.in.alpha_mod.alpha = (uint8_t)lround((sin(angle*M_PI)+1)/2 * 0x66);// + 0x11;
-				pxdst.in.alpha_mod.mode  = DMA2D_xPFCCR_AM_NONE;
-//				pxdst.in.alpha_mod.alpha = 0xff;
-
-				sx_fg=4+50;
-				sy_fg=4+60;
-				sx_bg=pxdst.width/2+2+50-(int16_t)lround(d_dx);
-				sy_bg=4+60-(int16_t)lround(d_dy);
-				dx=pxdst.width/2+2+50+(int16_t)lround(d_dx);
-				dy=4+60+(int16_t)lround(d_dy);
-				w=pxdst.width/2-100-6;
-				h=pxdst.height-120-8;
-
-				switch (mode) {
-					case 0:
-						dma2d_copy(&pxsrc_fg,&pxdst,sx_fg,sy_fg,dx,dy,w,h);
-						break;
-					case 1:
-						pxsrc_fg.in.alpha_mod.alpha = 0xff;
-						dma2d_convert_copy(&pxsrc_fg,&pxdst,sx_fg,sy_fg,dx,dy,w,h);
-						break;
-					case 2:
-						dma2d_convert_blenddst(&pxsrc_fg,&pxdst,sx_fg,sy_fg,dx,dy,w,h);
-						break;
-					case 3:
-						dma2d_convert_blend_copy(&pxsrc_fg,&pxsrc_bg,&pxdst,sx_fg,sy_fg,sx_bg,sy_bg,dx,dy,w,h);
-						break;
-				}
-
-				char buf[256];
-				sprintf(buf, "% 7.03f fps", fps);
-				//gfx_set_font_scale(2);
-//#define font font_Tamsyn10x20b_20
-#define font font_DejaVuSansMono_36
-				dma2d_fill(&pxdst, 0, 10,10,strnlen(buf,256)*font.charwidth,font.lineheight);
-//				dma2d_wait_complete();
-				gfx_set_font_blending(false);
-				gfx_puts2(10,10,buf,&font,(gfx_color_t){.argb8888.c=0x000000});
-
-
-//				gfx_balls.draw();
-
-				display_update();
-//				while(1);
-			}
-		}
-	}
-
-#endif
 #ifdef WINDOWING
 
 	/*

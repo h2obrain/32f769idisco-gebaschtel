@@ -81,7 +81,7 @@ $(LIST): $(OELF)
 	$(Q)$(OBJCOPY) -S $(<) > $(@)
 
 # build elf binary
-$(OELF) $(OMAP): $(OBJS) $(LDSCRIPT) $(LIBDEPS) # $(INCS)
+$(OELF) $(OMAP): $(OBJS) $(LDSCRIPT) $(LIBDEPS) #$(INCS)
 	@echo "  LD       $(@)"
 	@mkdir $(if $(Q),,-v) -p $(dir $(OELF));
 	@mkdir $(if $(Q),,-v) -p $(dir $(OMAP));
@@ -94,24 +94,24 @@ include $(OPENCM3_DIR)/mk/genlink-rules.mk
 #	$(Q)$(CPP) $(ARCH_FLAGS) $(shell $(OPENCM3_DIR)/scripts/genlink.py $(DEVICES_DATA) $(DEVICE) DEFS) -P -E $< > $@
 
 # build c
-$(OBJ_DIR_LOCAL)/%.o: %.c $(DEPS)
+$(OBJ_DIR_LOCAL)/%.o: %.c $(DEPS) #$(INCS)
 	@echo "  CC       $(subst $(TOP_DIR_REAL)/,,$(realpath $(<)))"
 	@#echo "         > $(subst $(OBJ_DIR_LOCAL)/,,$(@))"
 	@mkdir $(if $(Q),,-v) -p $(dir $(@));
 	$(Q)$(CC) $(CFLAGS_MK) $(CFLAGS) $(CPPFLAGS_MK) $(CPPFLAGS) -o $(@) -c $(<)
 # build c++
-$(OBJ_DIR_LOCAL)/%.o: %.cxx $(DEPS)
+$(OBJ_DIR_LOCAL)/%.o: %.cxx $(DEPS) #$(INCS)
 	@echo "  CXX      $(subst $(TOP_DIR_REAL)/,,$(realpath $(<)))"
 	@#echo "         > $(subst $(OBJ_DIR_LOCAL)/,,$(@))"
 	@mkdir $(if $(Q),,-v) -p $(dir $(@));
 	$(Q)$(CXX) $(CXXFLAGS_MK) $(CXXFLAGS) $(CPPFLAGS_MK) $(CPPFLAGS) -o $(@) -c $(<)
-$(OBJ_DIR_LOCAL)/%.o: %.cpp $(DEPS)
+$(OBJ_DIR_LOCAL)/%.o: %.cpp $(DEPS) $(INCS)
 	@echo "  CXX      $(subst $(TOP_DIR_REAL)/,,$(realpath $(<)))"
 	@#echo "         > $(subst $(OBJ_DIR_LOCAL)/,,$(@))"
 	@mkdir $(if $(Q),,-v) -p $(dir $(@));
 	$(Q)$(CXX) $(CXXFLAGS_MK) $(CXXFLAGS) $(CPPFLAGS_MK) $(CPPFLAGS) -o $(@) -c $(<)
 # build asm
-$(OBJ_DIR_LOCAL)/%.o: %.s $(DEPS)
+$(OBJ_DIR_LOCAL)/%.o: %.s $(DEPS) #$(INCS)
 	@echo "  ASM      $(subst $(TOP_DIR_REAL)/,,$(realpath $(<)))"
 	@#echo "         > $(subst $(OBJ_DIR_LOCAL)/,,$(@))"
 	@mkdir $(if $(Q),,-v) -p $(dir $(@));

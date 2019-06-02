@@ -29,9 +29,70 @@
 #include "sled/src/matrix.h"
 #include "sled/src/random.h"
 #include "sled/src/timers.h"
-unsigned int randn(unsigned int n) {
-	return (uint32_t)((uint64_t)rand()*n/RAND_MAX);
+//unsigned int randn(unsigned int n) {
+//	return (uint32_t)((uint64_t)rand()*n/RAND_MAX);
+//}
+
+#include "sled/src/taskpool.h"
+/* dummy mutex */
+//typedef void* oscore_mutex;
+oscore_mutex oscore_mutex_new(void) {
+	return NULL;
 }
+void oscore_mutex_lock(oscore_mutex m) {
+	(void)m;
+}
+void oscore_mutex_unlock(oscore_mutex m) {
+	(void)m;
+}
+void oscore_mutex_free(oscore_mutex m) {
+	(void)m;
+}
+/* tasks */
+static int* taskpool_numbers;
+static int taskpool_numbers_maxn = 0;
+void taskpool_forloop(taskpool* pool, void (*func)(void*), int start, int end) {
+	(void)pool;
+	int s = MAX(start, 0);
+	int c = (end) - s;
+
+	if (end > taskpool_numbers_maxn) {
+		taskpool_numbers = realloc(taskpool_numbers, end * sizeof(int));;
+		assert(taskpool_numbers);
+
+		for (int i = taskpool_numbers_maxn; i < end; i++)
+			taskpool_numbers[i] = i;
+
+		taskpool_numbers_maxn = end;
+	}
+
+	taskpool_submit_array(pool, c, func, &taskpool_numbers[s], sizeof(int));
+}
+// Hellish stuff to run stuff in parallel.
+inline void taskpool_submit_array(taskpool* pool, int count, void (*func)(void*), void* ctx, size_t size) {
+	(void)pool;
+	for (int i = 0; i < count; i++)
+		taskpool_submit(pool, func, ctx + (i * size));
+}
+int taskpool_submit(taskpool* pool, void (*func)(void*), void* ctx) {
+	(void)pool;
+//	if (pool->workers <= 1) {
+		// We're faking. This isn't a real taskpool.
+		func(ctx);
+		return 0;
+//	}
+//	taskpool_job job = {
+//		.func = func,
+//		.ctx = ctx,
+//	};
+//	tp_putjob(pool, job);
+//	return 0;
+}
+void taskpool_wait(taskpool* pool) {
+	(void)pool;
+}
+
+
 
 // This is where the matrix functions send output.
 // It is the root of the output chain.
@@ -42,16 +103,21 @@ int matrix_init(int outmodno) {
 	return 0;
 }
 
-#define PX_SIZE 20
+#define PX_SIZE 10
+static inline
+int cs(int size) {
+	return size/PX_SIZE-1;
+}
+
+#define X_OFF 10
+#define Y_OFF 60
+#define W     600
+#define H     400
 int matrix_getx(void) {
-//	return 300;
-	return gfx_width()/PX_SIZE;
-//	return 100;
+	return cs(W);
 }
 int matrix_gety(void) {
-//	return 300;
-	return gfx_height()/PX_SIZE;
-//	return 100;
+	return cs(H);
 }
 
 static inline
@@ -104,15 +170,15 @@ static inline void init_pxsrc(void) {
 int matrix_set(int x, int y, RGB color) {
 //	gfx_draw_pixel((int16_t)x,(int16_t)y,RGB_to_arPX_SIZEgb8888(color));
 //	init_pxdst();
-//	dma2d_fill(pxdst, RGB_to_argb8888(color).raw, x*PX_SIZE,y*PX_SIZE, PX_SIZE,PX_SIZE);
+//	dma2d_fill(pxdst, RGB_to_argb8888(color).raw, X_OFF+x*PX_SIZE,Y_OFFy*PX_SIZE, PX_SIZE,PX_SIZE);
 	init_pxsrc();
 	_pxsrc.in.pixel.alpha_mode.color = RGB_to_argb8888(color).raw;
-	dma2d_convert_copy__no_pxsrc_fix(pxsrc,pxdst, 0,0, x*PX_SIZE,y*PX_SIZE, PX_SIZE,PX_SIZE);
+	dma2d_convert_copy__no_pxsrc_fix(pxsrc,pxdst, 0,0, X_OFF+x*PX_SIZE,Y_OFF+y*PX_SIZE, PX_SIZE,PX_SIZE);
 	return 0;
 }
 
 RGB matrix_get(int x, int y) {
-	return RGB_from_argb8888(gfx_get_pixel((int16_t)x*PX_SIZE+PX_SIZE/2,(int16_t)y*PX_SIZE+PX_SIZE/2));
+	return RGB_from_argb8888(gfx_get_pixel(X_OFF+(int16_t)x*PX_SIZE+PX_SIZE/2,Y_OFF+(int16_t)y*PX_SIZE+PX_SIZE/2));
 }
 
 // Fills part of the matrix with jo-- a single color.
@@ -124,12 +190,12 @@ int matrix_fill(int start_x, int start_y, int end_x, int end_y, RGB color) {
 
 	init_pxdst();
 
-	dma2d_fill(pxdst, RGB_to_argb8888(color).raw, start_x,start_y, end_x-start_x,end_y-start_y);
+	dma2d_fill(pxdst, RGB_to_argb8888(color).raw, X_OFF+start_x,Y_OFF+start_y, end_x-start_x,end_y-start_y);
 //	int x;
 //	int y;
 //	for (y = MAX(start_y, 0); y <= MIN(end_y, matrix_gety()); y++)
 //		for (x = MAX(start_x, 0); x <= MIN(end_x, matrix_getx()); x++) {
-//			matrix_set(x, y, color);
+//			matrix_set(X_OFF+x, Y_OFF+y, color);
 //		}
 	return 0;
 }
@@ -137,7 +203,7 @@ int matrix_fill(int start_x, int start_y, int end_x, int end_y, RGB color) {
 // Zeroes the stuff.
 int matrix_clear(void) {
 	init_pxdst();
-	dma2d_fill(pxdst,0,0,0,matrix_getx(),matrix_gety());
+	dma2d_fill(pxdst,0,X_OFF+0*PX_SIZE,Y_OFF+0*PX_SIZE,matrix_getx()*PX_SIZE,matrix_gety()*PX_SIZE);
 	return 0;
 }
 
@@ -167,6 +233,9 @@ int matrix_render(void) {
 	gfx_puts2(10,10,buf,font,(gfx_color_t){.argb8888.c=0xffffffff});
 
 	display_update();
+
+	//while (!display_ready());
+
 	return 0;
 }
 
