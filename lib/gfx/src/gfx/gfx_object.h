@@ -43,9 +43,9 @@ GFX_FCT(init)(void *surface, int32_t width, int32_t height)
 {
 	__gfx_state.is_offscreen_rendering = 0;
 
-	*(uint16_t *)&__gfx_state.width_orig  = width;
-	*(uint16_t *)&__gfx_state.height_orig = height;
-	*(uint32_t *)&__gfx_state.pixel_count = (uint32_t)width*(uint32_t)height;
+	__gfx_state.width_orig  = width;
+	__gfx_state.height_orig = height;
+	__gfx_state.pixel_count = (uint32_t)width*(uint32_t)height;
 	__gfx_state.width        = width;
 	__gfx_state.height       = height;
 	//	__gfx_state.surface      = surface;

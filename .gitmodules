@@ -1,3 +1,6 @@
 [submodule "libopencm3"]
 	path = lib/opencm3
 	url = https://github.com/h2obrain/libopencm3.git
+[submodule "lib/gfx/sled"]
+	path = lib/sled_hijack/sled
+	url = https://github.com/h2obrain/sled.git

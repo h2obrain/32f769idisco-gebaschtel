@@ -126,8 +126,8 @@ typedef union {
 
 typedef struct {
 	uint32_t is_offscreen_rendering;
-	const int16_t width_orig, height_orig;
-	const uint32_t pixel_count;
+	/*const*/int16_t width_orig, height_orig;
+	/*const*/uint32_t pixel_count;
 	int16_t width, height;
 	visible_area_t visible_area;
 	int16_t cursor_x, cursor_y, cursor_x_orig;

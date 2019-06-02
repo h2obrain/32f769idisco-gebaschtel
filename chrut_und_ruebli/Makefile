@@ -3,19 +3,20 @@ TARGET  = chruut_und_ruebli
 # Find source files for different file endings
 # in a path relative to this Makefile
 SOURCES_DIRS += .
-SOURCES_DIRS += drivers
 INCLUDE_DIRS += config
 
 # paths to search for lib-related .mk-files (relative to the top-dir)
 LIB_SRC_DIRS += lib/support lib/drivers lib/gfx
+LIB_SRC_DIRS += lib/sled_hijack
 
  
 DEVICE   = stm32f769nih6
 
-#USE_LTO  = false
-#OPT      = -O0
+USE_LTO  = false
+OPT      = -O0
 #OPT     = -O3
 #CFLAGS += -D_GNU_SOURCE
+CFLAGS  += -DMALLOC_AREA_START=0xc0000000U -DMALLOC_AREA_SIZE=0x400000U
 
 LDLIBS   = -lm
 

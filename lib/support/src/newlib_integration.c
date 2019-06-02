@@ -62,7 +62,7 @@ void _exit (int status) {
 #elif defined(BETTER_LD_VERSION)
 extern unsigned _internal_heap_start;
 extern unsigned _internal_heap_end;
-#else
+#elif defined(EXTERNAL_RAM)
 #define RAM_ADDR 0x20010000
 #include <libopencm3/cm3/vector.h>
 //extern unsigned _stack; // already defined in vector.h

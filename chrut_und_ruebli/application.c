@@ -34,6 +34,12 @@
 #include "drivers/sdram.h"
 #include "drivers/display.h"
 
+
+#include <stdlib.h>
+#include <gfx/gfx.h>
+#include <gfx/jpeg.h>
+
+
 /**
  * Debugging
  */
@@ -57,6 +63,7 @@ static void pin_setup(void) {
 		RCC_GPIOJ,
 		SDRAM_32F769IDISCOVERY_CLOCKS,
 		DISPLAY_32F769IDISCOVERY_CLOCKS,
+		JPEG_CLOCKS,
 		0
 	});
 	/* pins */
@@ -142,8 +149,6 @@ void update_led_counter() {
 	}
 }
 
-#include <stdlib.h>
-#include "gfx/gfx.h"
 //#include "drivers/dsi_helper_functions.h"
 //void *align_pointer(uint32_t alignment, void *pointer);
 //void *align_pointer(uint32_t alignment, void *pointer) {
@@ -151,9 +156,68 @@ void update_led_counter() {
 //}
 #define SDRAM_SIZE  (0x1000000U/4) // only the first bank accessible?
 
-#define DMA2D_SIMPLE
+//#define DMA2D_SIMPLE
+//#define WINDOWING
+#define SLED
 
-#ifndef DMA2D_SIMPLE
+#ifdef DMA2D_SIMPLE
+#include "gebaschtel_jpg.h"
+uint8_t gebaschtel_out[100*100*4]={0};
+#endif
+
+#ifdef SLED
+#include <sled.h>
+#include <matrix.h>
+typedef struct timer {
+	// Special values for this:
+	// -1: No timer available
+	// -2: No *module* available
+	int moduleno;
+	unsigned long time;
+
+	// Malloc'd data containing strdup/malloc'd data, hence timers_deinit();
+	struct {
+		int argc;
+		char **argv;
+	};
+} timer;
+module_t *modules[] = {&gfx_balls};
+#ifndef T_SECOND
+#define T_SECOND 1000*1000
+#endif
+#ifndef T_MILLISECOND
+#define T_MILLISECOND 1000
+#endif
+// Time durations for queued effects.
+#ifndef TIME_SHORT
+#define TIME_SHORT 5
+#endif
+#ifndef TIME_MEDIUM
+#define TIME_MEDIUM 10
+#endif
+#ifndef TIME_LONG
+#define TIME_LONG 30
+#endif
+
+ulong udate(void);
+
+void timers_init(uint32_t modno);
+timer timer_get(void);
+int timer_add(ulong usec,int moduleno, int argc, char* argv[]);
+
+static int pick_next(int current_modno, ulong in) {
+	int next_mod;
+	for (int i = 0; i < 2; i++) {
+		next_mod = rand()%(sizeof(modules)/sizeof(void*));
+		if (next_mod != current_modno)
+			break;
+	}
+	return timer_add(in, next_mod, 0, NULL);
+}
+
+#endif
+
+#ifdef WINDOWING
 static inline
 int16_t bounce_add(int16_t v,int16_t *d,int16_t w) {
 	v += *d;
@@ -172,6 +236,8 @@ int16_t bounce_add(int16_t v,int16_t *d,int16_t w) {
 }
 #endif
 
+
+
 /**
  * Main loop
  */
@@ -188,11 +254,15 @@ int main(void)
 	uint64_t ram_clear_time = mtime();
 	memset((void *)SDRAM1_BASE_ADDRESS, 0x00, SDRAM_SIZE);
 	ram_clear_time = mtime() - ram_clear_time;
+#if defined(BETTER_LD_VERSION)
+	uint32_t (*layers)[480][800] = malloc(800*480*sizeof(uint32_t));
+#else
+	uint32_t (*layers)[480][800] = (void*)SDRAM1_BASE_ADDRESS;
+#endif
 	/* setup tft */
 //	uint8_t *video_data = malloc(2 * 800*480*4+1024);
 //	uint32_t (*layers)[800][480] = align_pointer(1024, video_data);
 	// the whole 1st rambank is reserved for video
-	uint32_t (*layers)[480][800] = (void*)SDRAM1_BASE_ADDRESS;
 	display_init(
 //			DSI_MODE_VIDEO_BURST,
 //			DSI_MODE_VIDEO_SYNC_PULSES,
@@ -224,14 +294,17 @@ int main(void)
 //		alpha = (alpha / 2 + 1) & 0xff000000;
 //	}
 
-#ifdef DMA2D_SIMPLE
+
+#if defined(DMA2D_SIMPLE) || defined(SLED)
 	/*
 	 * DMA2D debugging
 	 */
 	display_ltdc_config_begin();
 	display_ltdc_config_layer(DISPLAY_LAYER_1, false);
 //	display_ltdc_config_windowing_xywh(DISPLAY_LAYER_1, 0,0,100,100);
+#ifdef DMA2D_SIMPLE
 	display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 2,2,796,476);
+#endif
 	display_ltdc_config_end();
 
 	/* Give ltdc time to update its shadow registers! */
@@ -241,7 +314,12 @@ int main(void)
 	/* Read back the window settings.. */
 	dma2d_pixel_buffer_t pxsrc_fg, pxsrc_bg, pxdst, pxdst_layer1;
 	display_ltdc_config_begin();
+#if defined(DMA2D_SIMPLE)
 	display_ltdc_set_background_color(0xff,0xff,0xff);
+//#elif defined(SLED)
+#else
+	display_ltdc_set_background_color(0,0,0);
+#endif
 	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_1, &pxdst_layer1);
 	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_2, &pxdst);
 	display_ltdc_config_end();
@@ -278,6 +356,54 @@ int main(void)
 //	while(1) { if (display_ready()) { display_update(); } }
 
 	srand(systick_get_value());
+#endif
+
+#ifdef SLED
+	timers_init(0);
+	matrix_init(0);
+	for (uint32_t i=0; i<sizeof(modules)/sizeof(void*); i++) {
+		modules[i]->init(i);
+		modules[i]->reset(i);
+	}
+//	modules[0]->reset(0);
+	pick_next(-1, udate());
+//	modules[0]->draw(0);
+	int lastmod = -1;
+	while (1) {
+//		msleep(1);
+		timer tnext = timer_get();
+		if (tnext.moduleno == -1) {
+			// Queue random.
+			pick_next(lastmod, udate() + TIME_SHORT * T_SECOND);
+		} else
+		if (tnext.time > mtime()*1000) {
+			// Early break. Set this timer up for elimination by any 0-time timers that have come along
+			if (tnext.time == 0) tnext.time = 1;
+			timer_add(tnext.time, tnext.moduleno, 0,NULL);
+			continue;
+		} else {
+			int r = modules[tnext.moduleno]->draw(tnext.moduleno);
+			switch (r) {
+				case 0:
+					lastmod = tnext.moduleno;
+					break;
+				case 1:
+					pick_next(lastmod, udate() + T_MILLISECOND);
+					lastmod = -1;
+					break;
+				default :
+					for (uint32_t i=0; i<sizeof(modules)/sizeof(void*); i++) {
+						modules[i]->deinit(i);
+					}
+					while (1);
+					break;
+			}
+		}
+	}
+#endif
+
+#ifdef DMA2D_SIMPLE
+//	jpeg_decode(gebaschtel_jpg,sizeof(gebaschtel_jpg),gebaschtel_out,sizeof(gebaschtel_out));
 
 #define REFRESH_RATE 1000
 	uint64_t timeout = mtime();
@@ -361,13 +487,18 @@ int main(void)
 				gfx_set_font_blending(false);
 				gfx_puts2(10,10,buf,&font,(gfx_color_t){.argb8888.c=0x000000});
 
+
+//				gfx_balls.draw();
+
 				display_update();
 //				while(1);
 			}
 		}
 	}
 
-#else
+#endif
+#ifdef WINDOWING
+
 	/*
 	 * Windowing
 	 */
