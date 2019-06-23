@@ -39,7 +39,7 @@ include $(TOP_DIR)/tools/collect.mk
 # targets
 
 .SUFFIXES: # Delete the default suffixes
-.SUFFIXES: .h .c .hpp .hh .cpp .cxx .s .S .o 
+.SUFFIXES: .h .c .hpp .hh .cc .cpp .cxx .s .S .o 
 .SECONDEXPANSION:
 .SECONDARY:
 #.ONESHELL:
@@ -100,6 +100,11 @@ $(OBJ_DIR_LOCAL)/%.o: %.c $(DEPS) #$(INCS)
 	@mkdir $(if $(Q),,-v) -p $(dir $(@));
 	$(Q)$(CC) $(CFLAGS_MK) $(CFLAGS) $(CPPFLAGS_MK) $(CPPFLAGS) -o $(@) -c $(<)
 # build c++
+$(OBJ_DIR_LOCAL)/%.o: %.cc $(DEPS) #$(INCS)
+	@echo "  CXX      $(subst $(TOP_DIR_REAL)/,,$(realpath $(<)))"
+	@#echo "         > $(subst $(OBJ_DIR_LOCAL)/,,$(@))"
+	@mkdir $(if $(Q),,-v) -p $(dir $(@));
+	$(Q)$(CXX) $(CXXFLAGS_MK) $(CXXFLAGS) $(CPPFLAGS_MK) $(CPPFLAGS) -o $(@) -c $(<)
 $(OBJ_DIR_LOCAL)/%.o: %.cxx $(DEPS) #$(INCS)
 	@echo "  CXX      $(subst $(TOP_DIR_REAL)/,,$(realpath $(<)))"
 	@#echo "         > $(subst $(OBJ_DIR_LOCAL)/,,$(@))"

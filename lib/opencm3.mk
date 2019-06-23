@@ -1,5 +1,4 @@
 # Cheap way to build libopencm3
-
 ifndef TOP_DIR
 $(error TOP_DIR needs to be set before including opencm3.mk)
 endif

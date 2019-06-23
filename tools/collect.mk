@@ -54,7 +54,7 @@ IGNORED_SRCS:=
 endif
 
 # Collect .mk files
-MK_FILES_COLLECTED:=$(foreach LSD,$(LIB_SRC_DIRS),$(wildcard $(TOP_DIR)/$(LSD)/*.mk))
+MK_FILES_COLLECTED:=$(foreach LSD,$(sort $(LIB_SRC_DIRS)),$(wildcard $(TOP_DIR)/$(LSD)/*.mk))
 
 
 ############################
@@ -104,18 +104,18 @@ SOURCES_DIRS_COLLECTED:=$(filter-out $(IGNORED_SOURCES_DIRS_COLLECTED),$(sort $(
 # Find header files (INCS) recursively
 #INCS+=$(foreach DIR,$(INCLUDE_DIRS_COLLECTED),$(call rwildcard,$(TOP_DIR)$(DIR)/,*.h))
 # Find source files (SRCS) for different file endings
-SOURCE_FILE_ENDINGS := c cxx cpp s
+SOURCE_FILE_ENDINGS := c cc cxx cpp s
 SRCS+=$(foreach EXT,$(SOURCE_FILE_ENDINGS),$(foreach DIR,$(SOURCES_DIRS_COLLECTED),$(wildcard $(TOP_DIR)$(DIR)/*.$(EXT))))
 # Cleanup headers/sources
 #INCS:=$(sort $(foreach INC,$(filter %.h, $(INCS)),$(patsubst $(TOP_DIR_REAL)%,$(TOP_DIR)%,$(realpath $(INC)))))
-#SRCS:=$(sort $(foreach SRC,$(filter %.c %.s, $(SRCS)),$(patsubst $(TOP_DIR_REAL)%,$(TOP_DIR)%,$(realpath $(SRC)))))
+#SRCS:=$(sort $(foreach SRC,$(filter %.c %.s %.cc %.cxx %.cpp, $(SRCS)),$(patsubst $(TOP_DIR_REAL)%,$(TOP_DIR)%,$(realpath $(SRC)))))
 
 REALPATH_OR_NOT=$(if $(realpath $(dir $1)),$(realpath $(dir $1))/$(notdir $1),$1)
 #REALPATH_OR_NOT=$(realpath $(dir $1))/$(notdir $1)
 define CLEANUP_LIST
 $1:=$$(filter $$(addprefix %,$$(SOURCE_FILE_ENDINGS)),$$($1))
 $1:=$$(foreach FILE,$$($1),$$(call REALPATH_OR_NOT,$$(FILE)))
-$$(info $$($1))
+#$$(info $$($1))
 $1:=$$(patsubst $$(TOP_DIR_REAL)%,$$(TOP_DIR)%,$$($1))
 $1:=$$(patsubst $$(CURDIR)/%,%,$$($1))
 $1:=$$(sort $$($1))
@@ -142,10 +142,11 @@ INCLUDES += $(addprefix -I$(TOP_DIR),$(INCLUDE_DIRS_COLLECTED))
 ############################
 # objects (maybe use SOURCE_FILE_ENDINGS?)
 OBJS := $(SRCS)
-OBJS := $(OBJS:%.c=%.o)
-OBJS := $(OBJS:%.cxx=%.o)
-OBJS := $(OBJS:%.cpp=%.o)
-OBJS := $(OBJS:%.s=%.o)
+OBJS := $(OBJS:.c=.o)
+OBJS := $(OBJS:.cc=.o)
+OBJS := $(OBJS:.cxx=.o)
+OBJS := $(OBJS:.cpp=.o)
+OBJS := $(OBJS:.s=.o)
 OBJS := $(OBJS:%.o=$(OBJ_DIR_LOCAL)/%.o)
 #OBJS := $(patsubst ./%,%,$(subst $(CURDIR_FROM_TOP)/../,,$(OBJS))) << this break obj-to-src reference
 #OBJS := $(filter %.o, $(OBJS)) # TBD add check here

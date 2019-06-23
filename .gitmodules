@@ -4,3 +4,9 @@
 [submodule "lib/gfx/sled"]
 	path = lib/sled_hijack/sled
 	url = https://github.com/h2obrain/sled.git
+[submodule "lib/freetype2/freetype2"]
+	path = lib/freetype2/freetype2
+	url = https://git.savannah.nongnu.org/git/freetype/freetype2.git
+[submodule "lib/harfbuzz/harfbuzz"]
+	path = lib/harfbuzz/harfbuzz
+	url = https://github.com/harfbuzz/harfbuzz.git

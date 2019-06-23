@@ -49,12 +49,16 @@
 									<listOptionValue builtIn="false" value="bool=uint8_t"/>
 									<listOptionValue builtIn="false" value="__ARM_ARCH_7EM__"/>
 									<listOptionValue builtIn="false" value="GFX_COLOR_MODE=GFX_COLOR_MODE_ARGB8888"/>
+									<listOptionValue builtIn="false" value="HAVE_FREETYPE"/>
+									<listOptionValue builtIn="false" value="HAVE_CONFIG_H"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.988421747" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp.123823041" name="GCC C++ Compiler" superClass="org.eclipse.linuxtools.cdt.autotools.core.toolchain.tool.gpp">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.preprocessor.def.1600816214" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32F7"/>
+									<listOptionValue builtIn="false" value="HAVE_FREETYPE"/>
+									<listOptionValue builtIn="false" value="HAVE_CONFIG_H"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1712884334" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>

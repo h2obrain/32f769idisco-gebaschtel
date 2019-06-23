@@ -139,7 +139,7 @@ endif
 ifndef CXXFLAGS_MK
 CXXFLAGS_MK   = $(OPT) $(CXXSTD) $(DEBUG)
 CXXFLAGS_MK  += $(ARCH_FLAGS)
-CXXFLAGS_MK  += -Wextra -Wshadow -Wredundant-decls  -Weffc++
+CXXFLAGS_MK  += -Wextra -Wshadow -Wredundant-decls # -Weffc++
 CXXFLAGS_MK  += -fno-common -ffunction-sections -fdata-sections
 endif
 
@@ -186,7 +186,7 @@ endif
 
 LDLIBS       += -Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group
 
-# paths to search for lib-related .mk-files (relative to the top-dir)
+# paths to search for lib-related *.mk-files (relative to the top-dir)
 LIB_SRC_DIRS += lib
 
 endif

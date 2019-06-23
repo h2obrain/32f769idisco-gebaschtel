@@ -41,6 +41,15 @@
 #include <gfx/jpeg.h>
 
 
+//#define DMA2D_SIMPLE
+//#define WINDOWING
+//#define SLED
+#define HARFBUZZ
+
+#ifdef HARFBUZZ
+#include "harfbuzz_test.h"
+#endif
+
 /**
  * Debugging
  */
@@ -115,9 +124,11 @@ exti0_isr()
 	blue_button_state_changed = true;
 	update_led_counter();
 
+#ifdef SLED
 	if (BUTTON_BLUE_PRESSED()) {
 		matrix_next_animation();
 	}
+#endif
 }
 
 
@@ -159,10 +170,6 @@ uint32_t update_led_counter() {
 //	return (void *)align_up_to(alignment, (uint32_t)pointer);
 //}
 #define SDRAM_SIZE  (0x1000000U/4) // only the first bank accessible?
-
-//#define DMA2D_SIMPLE
-//#define WINDOWING
-#define SLED
 
 #ifdef DMA2D_SIMPLE
 #include "gebaschtel_jpg.h"
@@ -249,6 +256,54 @@ int main(void)
 //		}
 //		alpha = (alpha / 2 + 1) & 0xff000000;
 //	}
+
+#ifdef HARFBUZZ
+	display_ltdc_config_begin();
+	display_ltdc_config_layer(DISPLAY_LAYER_1, false);
+	//display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 0,0,640,480);
+	display_ltdc_config_end();
+	/* Give ltdc time to update its shadow registers! */
+	while (!display_ltdc_config_ready());
+	display_update();
+
+	/* Read back the window settings.. */
+	dma2d_pixel_buffer_t pxdst;
+	display_ltdc_config_begin();
+	display_ltdc_set_background_color(0x22,0x22,0x22);
+//	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_1, &pxdst_layer1);
+	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_2, &pxdst);
+	display_ltdc_config_end();
+
+	gfx_init(layers[1], pxdst.width,pxdst.height);
+
+	dma2d_fill(
+			&pxdst,
+			0, //0xffffffff,
+			0,0, pxdst.width,pxdst.height
+		);
+	while (!display_ltdc_config_ready());
+	display_update();
+
+	srand(systick_get_value());
+
+	dma2d_pixel_buffer_t hb_buf = {
+		.buffer = malloc(pxdst.width*pxdst.height),
+		.width  = pxdst.width,
+		.height = pxdst.height,
+		.in.pixel.bitsize = 8,
+		.in.pixel.format  = DMA2D_xPFCCR_CM_A8,
+		.in.pixel.alpha_mode.color = 0xffffff,
+		.out.pixel.bytesize = 0,// out is not supported!
+		.out.pixel.format = 0,
+	};
+	harfbuzz_test(&hb_buf, NULL,0,NULL,0,NULL,0);
+
+	dma2d_convert_copy__no_pxsrc_fix(&hb_buf,&pxdst, 0,0, 0,0, pxdst.width,pxdst.height);
+
+	display_update();
+	while (1);
+
+#endif
 
 
 #ifdef SLED
