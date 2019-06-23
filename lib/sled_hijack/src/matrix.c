@@ -23,19 +23,18 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "sled.h"
+#include "matrix.h"
 #include <drivers/display.h>
 #include <gfx/gfx.h>
 #include <drivers/dma2d_helper_functions.h>
-#include "sled/src/matrix.h"
-#include "sled/src/random.h"
-#include "sled/src/timers.h"
-//unsigned int randn(unsigned int n) {
-//	return (uint32_t)((uint64_t)rand()*n/RAND_MAX);
-//}
+#include "../sled/src/matrix.h"
+#include "../sled/src/random.h"
+#include "../sled/src/timers.h"
+#include <limits.h>
 
-#include "sled/src/taskpool.h"
+#include "../sled/src/taskpool.h"
 /* dummy mutex */
-//typedef void* oscore_mutex;
 oscore_mutex oscore_mutex_new(void) {
 	return NULL;
 }
@@ -111,8 +110,8 @@ int cs(int size) {
 
 #define X_OFF 10
 #define Y_OFF 60
-#define W     600
-#define H     400
+#define W     (gfx_width()-20)
+#define H     (gfx_height()-80)
 int matrix_getx(void) {
 	return cs(W);
 }
@@ -189,8 +188,8 @@ int matrix_fill(int start_x, int start_y, int end_x, int end_y, RGB color) {
 		return 2;
 
 	init_pxdst();
-
 	dma2d_fill(pxdst, RGB_to_argb8888(color).raw, X_OFF+start_x,Y_OFF+start_y, end_x-start_x,end_y-start_y);
+
 //	int x;
 //	int y;
 //	for (y = MAX(start_y, 0); y <= MIN(end_y, matrix_gety()); y++)
@@ -207,6 +206,8 @@ int matrix_clear(void) {
 	return 0;
 }
 
+static int current_mod = -1;
+uint32_t update_led_counter(void);
 int matrix_render(void) {
 	while (!display_ready());
 
@@ -227,14 +228,22 @@ int matrix_render(void) {
 //#define font font_Tamsyn10x20b_20
 #define font (&font_DejaVuSansMono_36)
 	init_pxdst();
-//	dma2d_fill(pxdst, 0, 10,10,strnlen(buf,256)*font->charwidth,font->lineheight);
+	dma2d_fill(pxdst, 0, 0,0, gfx_width(),10+font->lineheight);
 //				dma2d_wait_complete();
 //	gfx_set_font_blending(false);
 	gfx_puts2(10,10,buf,font,(gfx_color_t){.argb8888.c=0xffffffff});
+	gfx_puts("  ");
+	if (current_mod>=0) {
+		gfx_puts(sled_modules[current_mod]->name);
+	} else {
+		gfx_puts("no mod!");
+	}
 
 	display_update();
 
 	//while (!display_ready());
+
+	update_led_counter();
 
 	return 0;
 }
@@ -242,4 +251,66 @@ int matrix_render(void) {
 int matrix_deinit(void) {
 	//~ ..
 	return 0;
+}
+
+/* move somewhere.. */
+static int next_mod=-1;
+void matrix_next_animation() {
+	if (current_mod>=0) {
+		next_mod = (current_mod+1) % SLED_MODULE_COUNT;
+	} else {
+		next_mod = 0;
+	}
+}
+
+int matrix_pick_next(ulong delay_us) {
+	if (current_mod>=0) sled_modules[current_mod]->deinit(current_mod);
+	if (delay_us==ULONG_MAX) return 0;
+	current_mod = rand()%SLED_MODULE_COUNT;
+	sled_modules[current_mod]->init(current_mod);
+	sled_modules[current_mod]->reset(current_mod);
+	if (!delay_us)  delay_us++;
+	return timer_add(delay_us, current_mod, 0, NULL);
+}
+
+void matrix_run_main_loop() {
+	timers_init(0);
+	matrix_init(0);
+	//	for (uint32_t i=0; i<SLED_MODULE_COUNT; i++) {
+	//		sled_modules[i]->init(i);
+	//	}
+	matrix_pick_next(0);
+	while (1) {
+		if (next_mod!=-1) {
+			timer_add(0,-1,0,NULL); timer_get(); /* clear timers */
+			current_mod = next_mod; next_mod = -1;
+			timer_add(udate()+1000000, current_mod, 0, NULL);
+		}
+		timer tnext = timer_get();
+		if (tnext.moduleno == -1) {
+			// Queue random.
+			matrix_pick_next(udate()+1000000);
+		} else
+		if (tnext.time > udate()) {
+			// Early break. Set this timer up for elimination by any 0-time timers that have come along
+			//if (tnext.time == 0) tnext.time = 1;
+			timer_add(tnext.time, tnext.moduleno, 0,NULL);
+			continue;
+		} else {
+			int r = sled_modules[tnext.moduleno]->draw(tnext.moduleno);
+			switch (r) {
+				case 0:
+					break;
+				case 1:
+					matrix_pick_next(udate()+1000000);
+					break;
+				default :
+					for (uint32_t i=0; i<SLED_MODULE_COUNT; i++) {
+						sled_modules[i]->deinit(i);
+					}
+					while (1);
+					break;
+			}
+		}
+	}
 }

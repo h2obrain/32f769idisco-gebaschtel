@@ -12,9 +12,8 @@ LIB_SRC_DIRS += lib/sled_hijack
  
 DEVICE   = stm32f769nih6
 
-USE_LTO  = 0
-OPT      = -O0
-#OPT     = -O3
+USE_LTO  = false
+#OPT      = -O0
 #CFLAGS += -D_GNU_SOURCE
 CFLAGS  += -DMALLOC_AREA_START=0xc0000000U -DMALLOC_AREA_SIZE=0x400000U
 

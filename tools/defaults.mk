@@ -148,7 +148,7 @@ ifndef CPPFLAGS_MK
 CPPFLAGS_MK   = -MD
 CPPFLAGS_MK  += -Wall -Wundef
 CPPFLAGS_MK  += $(DEFS)
-ifneq ($(filter-out 0 false,USE_LTO),)
+ifneq ($(filter-out 0 false,$(USE_LTO)),)
 CPPFLAGS_MK  += -flto
 endif
 CPPFLAGS_MK  += $(genlink_cppflags)
@@ -169,7 +169,7 @@ ifndef LDFLAGS_MK
 LDFLAGS_MK    = --static -nostartfiles
 LDFLAGS_MK   += -T$(LDSCRIPT)
 LDFLAGS_MK   += $(ARCH_FLAGS) $(DEBUG)
-ifneq ($(filter-out 0 false,USE_LTO),)
+ifneq ($(filter-out 0 false,$(USE_LTO)),)
 LDFLAGS_MK   += -flto -fuse-linker-plugin
 endif
 LDFLAGS_MK   += -Wl,-Map=$(OMAP) -Wl,--cref

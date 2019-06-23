@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <limits.h>
 
 #include <libopencmsis/core_cm3.h>
 
@@ -99,14 +100,13 @@ static void pin_setup(void) {
 /**
  * Function definitions
  */
-static void update_led_counter(void);
+uint32_t update_led_counter(void);
 
 /**
  * Interrupts
  */
 
 /* Blue button interrupt (EXTI makes not too much sense here :)) */
-static uint32_t mode = 3;
 static bool blue_button_state_changed = false;
 void
 exti0_isr()
@@ -116,7 +116,7 @@ exti0_isr()
 	update_led_counter();
 
 	if (BUTTON_BLUE_PRESSED()) {
-		mode = (mode+1)%4;
+		matrix_next_animation();
 	}
 }
 
@@ -124,16 +124,19 @@ exti0_isr()
 /**
  * Functions
  */
-void update_led_counter() {
+uint32_t update_led_counter() {
 	/* little grey code blinker */
 	static const uint32_t  gcl[] = {0,1,3,2,6,7,5,4};
 	static const uint32_t *gc    = gcl;
 	static const uint32_t *gcle  = gcl+sizeof(gcl)/sizeof(gcl[0])-1;
+	uint32_t ret = 0;
 	if (blue_button_state_changed) {
 		blue_button_state_changed = false;
 		gc = gcl;
+		ret++;
 	}
 	if (BUTTON_BLUE_PRESSED()) {
+		ret++;
 		gpio_set(LED_LD1);
 		gpio_set(LED_LD2);
 		gpio_set(LED_LD3);
@@ -147,6 +150,7 @@ void update_led_counter() {
 		if (gc==gcle) gc = gcl;
 		else          gc++;
 	}
+	return ret;
 }
 
 //#include "drivers/dsi_helper_functions.h"
@@ -167,54 +171,6 @@ uint8_t gebaschtel_out[100*100*4]={0};
 
 #ifdef SLED
 #include <sled.h>
-#include <matrix.h>
-typedef struct timer {
-	// Special values for this:
-	// -1: No timer available
-	// -2: No *module* available
-	int moduleno;
-	unsigned long time;
-
-	// Malloc'd data containing strdup/malloc'd data, hence timers_deinit();
-	struct {
-		int argc;
-		char **argv;
-	};
-} timer;
-#ifndef T_SECOND
-#define T_SECOND 1000*1000
-#endif
-#ifndef T_MILLISECOND
-#define T_MILLISECOND 1000
-#endif
-// Time durations for queued effects.
-#ifndef TIME_SHORT
-#define TIME_SHORT 5
-#endif
-#ifndef TIME_MEDIUM
-#define TIME_MEDIUM 10
-#endif
-#ifndef TIME_LONG
-#define TIME_LONG 30
-#endif
-
-ulong udate(void);
-
-void timers_init(uint32_t modno);
-timer timer_get(void);
-int timer_add(ulong usec,int moduleno, int argc, char* argv[]);
-
-static int pick_next(int current_modno, ulong in) {
-	int next_mod;
-	for (int i = 0; i < 2; i++) {
-		next_mod = rand()%SLED_MODULE_COUNT;
-		if (next_mod != current_modno)
-			break;
-	}
-	sled_modules[next_mod]->reset(next_mod);
-	return timer_add(in, next_mod, 0, NULL);
-}
-
 #endif
 
 #ifdef WINDOWING
@@ -301,7 +257,7 @@ int main(void)
 	 */
 	display_ltdc_config_begin();
 	display_ltdc_config_layer(DISPLAY_LAYER_1, false);
-	display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 0,0,640,480);
+	//display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 0,0,640,480);
 	display_ltdc_config_end();
 
 	/* Give ltdc time to update its shadow registers! */
@@ -311,7 +267,7 @@ int main(void)
 	/* Read back the window settings.. */
 	dma2d_pixel_buffer_t pxdst;
 	display_ltdc_config_begin();
-	display_ltdc_set_background_color(0,0,0);
+	display_ltdc_set_background_color(0x22,0x22,0x22);
 //	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_1, &pxdst_layer1);
 	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_2, &pxdst);
 	display_ltdc_config_end();
@@ -328,47 +284,8 @@ int main(void)
 
 	srand(systick_get_value());
 
-	timers_init(0);
-	matrix_init(0);
-	for (uint32_t i=0; i<SLED_MODULE_COUNT; i++) {
-		sled_modules[i]->init(i);
-		sled_modules[i]->reset(i);
-	}
-//	modules[0]->reset(0);
-	pick_next(-1, udate());
-//	modules[0]->draw(0);
-	int lastmod = -1;
-	while (1) {
-//		msleep(1);
-		timer tnext = timer_get();
-		if (tnext.moduleno == -1) {
-			// Queue random.
-			pick_next(lastmod, udate() + TIME_SHORT * T_SECOND);
-		} else
-		if (tnext.time > mtime()*1000) {
-			// Early break. Set this timer up for elimination by any 0-time timers that have come along
-			if (tnext.time == 0) tnext.time = 1;
-			timer_add(tnext.time, tnext.moduleno, 0,NULL);
-			continue;
-		} else {
-			int r = sled_modules[tnext.moduleno]->draw(tnext.moduleno);
-			switch (r) {
-				case 0:
-					lastmod = tnext.moduleno;
-					break;
-				case 1:
-					pick_next(lastmod, udate() + T_MILLISECOND);
-					lastmod = -1;
-					break;
-				default :
-					for (uint32_t i=0; i<SLED_MODULE_COUNT; i++) {
-						sled_modules[i]->deinit(i);
-					}
-					while (1);
-					break;
-			}
-		}
-	}
+	matrix_run_main_loop();
+
 #endif
 
 #ifdef DMA2D_SIMPLE

@@ -102,12 +102,12 @@ timer timer_get(void) {
 	// Find the soonest/smallest timer.
 	int smallest = 0;
 	ulong min = TIMERS[0].time;
-	if (timer_count > 1)
-		for (int i = 1; i < timer_count; i++)
-			if (min > TIMERS[i].time) {
-				smallest = i;
-				min = TIMERS[i].time;
-			}
+	for (int i = 1; i < timer_count; i++) {
+		if (min > TIMERS[i].time) {
+			smallest = i;
+			min = TIMERS[i].time;
+		}
+	}
 
 	// Keep it.
 	t = TIMERS[smallest];
@@ -132,6 +132,7 @@ timer timer_get(void) {
 }
 
 int timers_init(int omno) {
+	(void)omno;
 //	outmodno = omno;
 //	tlock = oscore_mutex_new();
 //	breakpipe = oscore_event_new();

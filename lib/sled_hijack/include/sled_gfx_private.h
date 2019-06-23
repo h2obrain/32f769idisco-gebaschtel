@@ -1,4 +1,4 @@
-#include "sled.h"
+#include <sled.h>
 
 static int init(int moduleno, char* argstr);
 static void reset(int _modno);

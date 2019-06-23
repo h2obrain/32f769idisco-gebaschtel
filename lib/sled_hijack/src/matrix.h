@@ -19,4 +19,9 @@ extern int matrix_clear(void);
 extern int matrix_render(void);
 extern int matrix_deinit(void);
 
+extern void matrix_run_main_loop(void);
+extern int matrix_pick_next(ulong delay_us);
+extern void matrix_next_animation(void);
+
 #endif
+

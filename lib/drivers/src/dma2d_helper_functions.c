@@ -219,9 +219,9 @@ bool dma2d_fix_pos_size(
 	if (sy_fg) dma2d_fix_pos_smaller_zero(sy_fg, sy_bg, dy, h);
 	if (sy_bg) dma2d_fix_pos_smaller_zero(sy_bg, dy, sy_fg, h);
 	/* w<0 */
-	if (*w<0) return false;
+	if (*w<=0) return false;
 	/* h<0 */
-	if (*h<0) return false;
+	if (*h<=0) return false;
 	/* x>=W */
 	             if (*dx>=W_d)     return false;
 	if (sx_fg) { if (*sx_fg>=W_fg) return false; }

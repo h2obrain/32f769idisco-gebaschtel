@@ -102,13 +102,14 @@ caddr_t _sbrk ( ptrdiff_t incr ) {
 	caddr_t prev_heap_end, next_heap_end;
 	prev_heap_end = heap_end_current;
 	/* align data on a 8 byte boundary */
-	next_heap_end = (caddr_t)(((size_t)heap_end_current + incr + 7) & ~7);
+	next_heap_end = (caddr_t)(((size_t)heap_end_current + incr + 7) & ~7UL);
 	if (next_heap_end > heap_end ) {
 		/* heap overflow */
         errno = ENOMEM;
         return (caddr_t)NULL;
 	}
 	heap_end_current = next_heap_end;
+	assert(((uint32_t)heap_end_current&7)==0);
 	return prev_heap_end;
 }
 
