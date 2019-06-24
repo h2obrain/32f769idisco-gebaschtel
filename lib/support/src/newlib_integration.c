@@ -77,7 +77,7 @@ extern unsigned _internal_heap_end;
 #include <malloc.h>
 //
 //see #include <unistd.h> with #define _COMPILING_NEWLIB defined
-__attribute__((externally_visible))
+//__attribute__((externally_visible))
 caddr_t  _sbrk ( ptrdiff_t incr );
 //__attribute__((externally_visible))
 //void __malloc_lock(struct _reent *_r);

@@ -93,6 +93,8 @@ include $(OPENCM3_DIR)/mk/genlink-rules.mk
 #	@printf "  GENLNK  $(DEVICE)\n"
 #	$(Q)$(CPP) $(ARCH_FLAGS) $(shell $(OPENCM3_DIR)/scripts/genlink.py $(DEVICES_DATA) $(DEVICE) DEFS) -P -E $< > $@
 
+#$(error $(DEPS))
+
 # build c
 $(OBJ_DIR_LOCAL)/%.o: %.c $(DEPS) #$(INCS)
 	@echo "  CC       $(subst $(TOP_DIR_REAL)/,,$(realpath $(<)))"

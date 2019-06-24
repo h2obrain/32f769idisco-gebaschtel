@@ -172,7 +172,7 @@ uint32_t update_led_counter() {
 #define SDRAM_SIZE  (0x1000000U/4) // only the first bank accessible?
 
 #ifdef DMA2D_SIMPLE
-#include "gebaschtel_jpg.h"
+#include "data/gebaschtel_jpg.h"
 uint8_t gebaschtel_out[100*100*4]={0};
 #endif
 
@@ -296,7 +296,7 @@ int main(void)
 		.out.pixel.bytesize = 0,// out is not supported!
 		.out.pixel.format = 0,
 	};
-	harfbuzz_test(&hb_buf, NULL,0,NULL,0,NULL,0);
+	harfbuzz_test(&hb_buf);
 
 	dma2d_convert_copy__no_pxsrc_fix(&hb_buf,&pxdst, 0,0, 0,0, pxdst.width,pxdst.height);
 

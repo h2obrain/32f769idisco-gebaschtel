@@ -1,3 +1,5 @@
+/* based on https://github.com/lxnt/ex-sdl-freetype-harfbuzz.git */
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <inttypes.h>
@@ -190,12 +192,11 @@ void vline(dma2d_pixel_buffer_t *s, int min_y, int max_y, int x, uint8_t color) 
     }
 }
 
-int harfbuzz_test(
-		dma2d_pixel_buffer_t *surface,
-		void *DejaVuSerif,uint32_t DejaVuSerif_size,
-		void *amiri_regular_ttf,uint32_t amiri_regular_ttf_size,
-		void *fireflysung_ttf,uint32_t fireflysung_ttf_size
-) {
+#include "data/fonts/DejaVuSerif_ttf.h"
+#include "data/fonts/amiri-0.104/amiri-regular_ttf.h"
+#include "data/fonts/fireflysung-nano_ttf.h"
+
+int harfbuzz_test(dma2d_pixel_buffer_t *surface) {
     int ptSize = 50*64;
     int device_hdpi = 72;
     int device_vdpi = 72;
@@ -209,17 +210,17 @@ int harfbuzz_test(
 
     /* Load our fonts */
     FT_Face ft_face[NUM_EXAMPLES];
-    assert(!FT_New_Memory_Face(ft_library, DejaVuSerif,DejaVuSerif_size, 0, &ft_face[ENGLISH]));
+    assert(!FT_New_Memory_Face(ft_library, DejaVuSerif_ttf,sizeof(DejaVuSerif_ttf), 0, &ft_face[ENGLISH]));
     assert(!FT_Set_Char_Size(ft_face[ENGLISH], 0, ptSize, device_hdpi, device_vdpi ));
     ftfdump(ft_face[ENGLISH]); // wonderful world of encodings ...
     force_ucs2_charmap(ft_face[ENGLISH]); // which we ignore.
 
-    assert(!FT_New_Memory_Face(ft_library, amiri_regular_ttf,amiri_regular_ttf_size, 0, &ft_face[ARABIC]));
+    assert(!FT_New_Memory_Face(ft_library, amiri_regular_ttf,sizeof(amiri_regular_ttf), 0, &ft_face[ARABIC]));
     assert(!FT_Set_Char_Size(ft_face[ARABIC], 0, ptSize, device_hdpi, device_vdpi ));
     ftfdump(ft_face[ARABIC]);
     force_ucs2_charmap(ft_face[ARABIC]);
 
-    assert(!FT_New_Memory_Face(ft_library, fireflysung_ttf,fireflysung_ttf_size, 0, &ft_face[CHINESE]));
+    assert(!FT_New_Memory_Face(ft_library, fireflysung_nano_ttf,sizeof(fireflysung_nano_ttf), 0, &ft_face[CHINESE]));
     assert(!FT_Set_Char_Size(ft_face[CHINESE], 0, ptSize, device_hdpi, device_vdpi ));
     ftfdump(ft_face[CHINESE]);
     force_ucs2_charmap(ft_face[CHINESE]);
@@ -363,10 +364,13 @@ int harfbuzz_test(
             if (HB_DIRECTION_IS_HORIZONTAL(hb_buffer_get_direction(buf))) {
                 baseline_offset = max_y;
                 baseline_shift  = min_x;
-            }
+            } else
             if (HB_DIRECTION_IS_VERTICAL(hb_buffer_get_direction(buf))) {
                 baseline_offset = min_x;
                 baseline_shift  = max_y;
+            } else {
+            	assert("Invalid direction" && 0);
+                baseline_offset = baseline_shift  = 0;
             }
 
             if (resized)
@@ -401,8 +405,7 @@ int harfbuzz_test(
 
                 /* draw the baseline */
                 hline(surface, x, x + bbox_w, y, 0xff);
-            }
-
+            } else
             if (HB_DIRECTION_IS_VERTICAL(hb_buffer_get_direction(buf))) {
                 left   = x;
                 right  = x + bbox_w;
@@ -415,10 +418,14 @@ int harfbuzz_test(
                 bottom -= baseline_shift;
 
                 vline(surface, y, y + bbox_h, x, 0xff);
+            } else {
+            	assert("Invalid direction" && 0);
+            	left = right = top = bottom = 0;
             }
-            if (resized)
-                printf("ex %d origin %d,%d bbox l=%d r=%d t=%d b=%d\n",
-                                        i, x, y, left, right, top, bottom);
+            if (resized) {
+            	printf("ex %d origin %d,%d bbox l=%d r=%d t=%d b=%d\n",
+						i, x, y, left, right, top, bottom);
+            }
 
             /* +1/-1 are for the bbox borders be the next pixel outside the bbox itself */
             hline(surface, left - 1, right + 1, top - 1, 0xff);
