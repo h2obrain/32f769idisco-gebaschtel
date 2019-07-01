@@ -150,7 +150,7 @@ CPPFLAGS_MK  += -Wall -Wundef
 CPPFLAGS_MK  += $(DEFS)
 ifneq ($(filter-out 0 false,$(USE_LTO)),)
 CPPFLAGS_MK  += -flto
-CPPFLAGS_MK  += -ffat-lto-objects
+#CPPFLAGS_MK  += -ffat-lto-objects
 endif
 CPPFLAGS_MK  += $(genlink_cppflags)
 endif
@@ -173,7 +173,7 @@ LDFLAGS_MK   += $(ARCH_FLAGS) $(DEBUG)
 ifneq ($(filter-out 0 false,$(USE_LTO)),)
 LDFLAGS_MK   += -flto -fuse-linker-plugin
 #LDFLAGS_MK   += -ffat-lto-objects
-#LDFLAGS_MK   += -Wl,--allow-multiple-definition
+LDFLAGS_MK   += -Wl,--allow-multiple-definition
 #LDFLAGS_MK   += -nodefaultlibs -nostdlib
 endif
 LDFLAGS_MK   += -Wl,-Map=$(OMAP) -Wl,--cref
@@ -184,6 +184,8 @@ endif
 LDFLAGS_MK   += -Wl,--fatal-warnings
 endif
 
+#CPPFLAGS_MK  += -mno-unaligned-access
+#LDFLAGS_MK   += -mno-unaligned-access
 
 ############################
 # always needed libraries

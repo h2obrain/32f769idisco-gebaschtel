@@ -1360,7 +1360,7 @@ void GFX_FCT(draw_char)(
 
 
 #if GFX_DMA2D_FONTS
-	__gfx_state.font_pxbuf.buffer = cp->data;
+	__gfx_state.font_pxbuf.buffer = (uint8_t *)cp->data;
 	__gfx_state.font_pxbuf.width  = cp->bbox.x2-cp->bbox.x1;
 	__gfx_state.font_pxbuf.height = cp->bbox.y2-cp->bbox.y1;
 	__gfx_state.font_pxbuf.in.pixel.alpha_mode.color = col.raw;

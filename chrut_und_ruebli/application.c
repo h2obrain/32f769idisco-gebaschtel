@@ -200,28 +200,85 @@ int16_t bounce_add(int16_t v,int16_t *d,int16_t w) {
 #endif
 
 
+#include <libopencm3/cm3/mpu.h>
 
-/**
- * Main loop
- */
-int main(void)
-{
+static
+void preinit(void) {
 	/* init timers. */
 	clock_setup();
 	/* setup pins */
 	pin_setup();
 	/* low level setup */
 	system_setup();
+	/* setup mpu to enable unaligned memory accesses in external sdram */
+	asm("dmb");
+	MPU_RNR  = 0; /* config region 0 */
+	uint32_t rasr = 0;
+	rasr |= MPU_RASR_ATTR_XN; /* instruction fetches/access disable */
+	rasr |= MPU_RASR_ATTR_AP_PRW_URW; /* full access */
+	rasr |= 1 << 19; /* TEX level 1 */
+//	rasr |= MPU_RASR_ATTR_C; /* cacheable */
+//	rasr |= MPU_RASR_ATTR_B; /* bufferable */
+//	rasr |= MPU_RASR_ATTR_S; /* shareable */
+//	rasr |= (x&0xff) << MPU_RASR_SRD_LSB; /* subregion disable */
+	uint32_t n = 24; /* protection area size = 2^(size+1) = 16MB */
+	rasr |= ((n-1)&0x1f)<<MPU_RASR_SIZE_LSB;
+	rasr |= MPU_RASR_ENABLE; /* enable region */
+	MPU_RASR = rasr;
+	uint32_t addr_mask = 0;
+	for (uint32_t i = n; i<32; i++) {
+		addr_mask |= 1<<i;
+	}
+//	MPU_RBAR = ((SDRAM1_BASE_ADDRESS&addr_mask) << n) | MPU_RBAR_VALID; /* set address */
+	MPU_RBAR = (SDRAM1_BASE_ADDRESS&addr_mask); /* set address */
+	// MPU_CTRL_PRIVDEFENA /* */
+	// MPU_CTRL_HFNMIENA   /* enable mpu during hard-fault */
+	MPU_CTRL = MPU_CTRL_PRIVDEFENA | MPU_CTRL_ENABLE; /* enable mpu */
+	SCB_SHCSR |= SCB_SHCSR_MEMFAULTENA; /* enable exceptions */
+	/* ensure MPU setting take effects */
+	asm("dsb");
+	asm("isb");
+
 	/* setup sdram */
 	sdram_init();
 	uint64_t ram_clear_time = mtime();
 	memset((void *)SDRAM1_BASE_ADDRESS, 0x00, SDRAM_SIZE);
 	ram_clear_time = mtime() - ram_clear_time;
-#if defined(BETTER_LD_VERSION)
-	uint32_t (*layers)[480][800] = malloc(800*480*sizeof(uint32_t));
+}
+
+__attribute__((section(".preinit_array"),externally_visible))
+void (*app_preinit_array[])(void) = { &preinit };
+
+
+/**
+ * Main loop
+ */
+int main(void)
+{
+#if defined(VIDEO_MEMORY_ADDRESS)
+	assert(VIDEO_MEMORY_SIZE == 2*800*480*sizeof(uint32_t));
+	uint32_t (*layers)[480][800] = (void*)VIDEO_MEMORY_ADDRESS;
+#elif defined(BETTER_LD_VERSION) || (defined(MALLOC_AREA_START) && defined(MALLOC_AREA_SIZE))
+	uint32_t (*layers)[480][800] = malloc(2*800*480*sizeof(uint32_t));
 #else
 	uint32_t (*layers)[480][800] = (void*)SDRAM1_BASE_ADDRESS;
 #endif
+
+//#ifdef HARFBUZZ
+//	srand(systick_get_value());
+//	dma2d_pixel_buffer_t hb_buf = {
+//		.buffer = malloc(800*480),
+//		.width  = 800,
+//		.height = 480,
+//		.in.pixel.bitsize = 8,
+//		.in.pixel.format  = DMA2D_xPFCCR_CM_A8,
+//		.in.pixel.alpha_mode.color = 0xffffff,
+//		.out.pixel.bytesize = 1,// out is not supported!
+//		.out.pixel.format = 0,
+//	};
+//	harfbuzz_test(&hb_buf);
+//#endif
+
 	/* setup tft */
 //	uint8_t *video_data = malloc(2 * 800*480*4+1024);
 //	uint32_t (*layers)[800][480] = align_pointer(1024, video_data);
@@ -284,8 +341,6 @@ int main(void)
 	while (!display_ltdc_config_ready());
 	display_update();
 
-	srand(systick_get_value());
-
 	dma2d_pixel_buffer_t hb_buf = {
 		.buffer = malloc(pxdst.width*pxdst.height),
 		.width  = pxdst.width,
@@ -298,11 +353,26 @@ int main(void)
 	};
 	harfbuzz_test(&hb_buf);
 
+//	uint32_t *ptr = pxdst.buffer;
+//	for (uint32_t i=10;i<400;i++) {
+//		ptr[i] = 0xffffffff;
+//	}
+//	gfx_draw_line(10,10,400,400,(gfx_color_t){.argb8888={.a=0xff,.r=0,.g=0xff,.b=0xff}});
 	dma2d_convert_copy__no_pxsrc_fix(&hb_buf,&pxdst, 0,0, 0,0, pxdst.width,pxdst.height);
 
-	display_update();
-	while (1);
-
+#define REFRESH_RATE 10
+	uint64_t timeout = mtime();
+	while (1) {
+		if (display_ready()) {
+			uint64_t time = mtime();
+			if (timeout<=time) {
+				timeout += 1000/REFRESH_RATE;
+				if (timeout<=time) timeout = time + 1000/REFRESH_RATE;
+				update_led_counter();
+				display_update();
+			}
+		}
+	}
 #endif
 
 

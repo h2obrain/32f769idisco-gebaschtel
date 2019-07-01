@@ -16,16 +16,19 @@ DEVICE   = stm32f769nih6
 #USE_LTO  = false
 #OPT      = -O0
 
-CFLAGS  += --specs=nosys.specs
+#CFLAGS  += --specs=nosys.specs
 #CFLAGS  += -D_GNU_SOURCE
-DEFS    += -DMALLOC_AREA_START=0xc0000000U -DMALLOC_AREA_SIZE=0x400000U
+
+#DEFS    += -DVIDEO_MEMORY_ADDRESS=0xc0000000U -DVIDEO_MEMORY_SIZE="(2*800*480*sizeof(uint32_t))"
+#DEFS    += -DMALLOC_AREA_START="(VIDEO_MEMORY_ADDRESS+VIDEO_MEMORY_SIZE)" -DMALLOC_AREA_SIZE="(0x1000000U-VIDEO_MEMORY_SIZE)" #0x400000U
+DEFS    += -DMALLOC_AREA_START=0xc0000000U -DMALLOC_AREA_SIZE=0x1000000U #0x400000U
 
 LDLIBS  += -lm
 
 ## harfbuzz and freetype2  #
 LIB_SRC_DIRS += lib/freetype2
 LIB_SRC_DIRS += lib/harfbuzz
-LDLIBS       += -lstdc++_nano
+LDLIBS       += -lstdc++ #_nano
 ###
 
 OOCD           = openocd

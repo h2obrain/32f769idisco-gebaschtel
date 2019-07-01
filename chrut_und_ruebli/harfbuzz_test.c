@@ -20,7 +20,7 @@
 
 /* translations courtesy of google */
 const char *texts[NUM_EXAMPLES] = {
-    "Ленивый рыжий кот",
+    "Ленивый рыжий кот-hâãä?fi",
     "كسول الزنجبيل القط",
     "懶惰的姜貓",
 };
@@ -177,8 +177,9 @@ void hline(dma2d_pixel_buffer_t *s, int min_x, int max_x, int y, uint8_t color) 
 	uint8_t *pix = (uint8_t *)s->buffer + y * s->width + min_x;
 	uint8_t *end = (uint8_t *)s->buffer + y * s->width + max_x;
 
-    while (pix - 1 != end)
-        *pix++ = color;
+    while (pix - 1 != end) {
+    	*pix++ = color;
+    }
 }
 
 static

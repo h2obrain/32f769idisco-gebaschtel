@@ -56,6 +56,10 @@
 									<listOptionValue builtIn="false" value="NULL=0"/>
 									<listOptionValue builtIn="false" value="size_t=uint32_t"/>
 									<listOptionValue builtIn="false" value="bool=uint8_t"/>
+									<listOptionValue builtIn="false" value="VIDEO_MEMORY_ADDRESS=0xc0000000U"/>
+									<listOptionValue builtIn="false" value="VIDEO_MEMORY_SIZE=(2*800*480*sizeof(uint32_t))"/>
+									<listOptionValue builtIn="false" value="MALLOC_AREA_START=(VIDEO_MEMORY_ADDRESS+VIDEO_MEMORY_SIZE)"/>
+									<listOptionValue builtIn="false" value="MALLOC_AREA_SIZE=(0x1000000U-VIDEO_MEMORY_SIZE)"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.988421747" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -67,6 +71,10 @@
 									<listOptionValue builtIn="false" value="GFX_COLOR_MODE=GFX_COLOR_MODE_ARGB8888"/>
 									<listOptionValue builtIn="false" value="HAVE_FREETYPE"/>
 									<listOptionValue builtIn="false" value="HAVE_CONFIG_H"/>
+									<listOptionValue builtIn="false" value="VIDEO_MEMORY_ADDRESS=0xc0000000U"/>
+									<listOptionValue builtIn="false" value="VIDEO_MEMORY_SIZE=(2*800*480*sizeof(uint32_t))"/>
+									<listOptionValue builtIn="false" value="MALLOC_AREA_START=(VIDEO_MEMORY_ADDRESS+VIDEO_MEMORY_SIZE)"/>
+									<listOptionValue builtIn="false" value="MALLOC_AREA_SIZE=(0x1000000U-VIDEO_MEMORY_SIZE)"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.include.paths.1675081743" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/local/arm-none-eabi/include"/>
@@ -146,6 +154,14 @@
 				<buildCommand>make</buildCommand>
 				<buildArguments/>
 				<buildTarget>clean</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>true</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="all flash V=0" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>all flash V=0</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>

@@ -22,6 +22,7 @@ void system_setup(void) {
 	debug_setup();
 	const char msg[] = "\nEnabling printf on swo trace\n";
 	trace_puts(msg,sizeof(msg));
+	putsf_table[STDERR_FILENO] = trace_puts;
 	putsf_table[STDOUT_FILENO] = trace_puts;
 	// do not use printf until ram was initialized!
 //	printf("Printf on swo trace\n");
