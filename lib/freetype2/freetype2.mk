@@ -57,7 +57,7 @@ FT2_RASTERIZERS += src/smooth/smooth.c     # anti-aliasing rasterizer
 
 FT2_AUX     += src/autofit/autofit.c   # auto hinting module
 FT2_AUX_OPT += src/cache/ftcache.c     # cache sub-system (in beta)
-FT2_AUX     += src/gzip/ftgzip.c       # support for compressed fonts (.gz)
+FT2_AUX_OPT += src/gzip/ftgzip.c       # support for compressed fonts (.gz)
 FT2_AUX_OPT += src/lzw/ftlzw.c         # support for compressed fonts (.Z)
 FT2_AUX_OPT += src/bzip2/ftbzip2.c     # support for compressed fonts (.bz2)
 FT2_AUX_OPT += src/gxvalid/gxvalid.c   # TrueTypeGX/AAT table validation

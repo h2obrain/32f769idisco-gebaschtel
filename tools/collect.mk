@@ -42,6 +42,9 @@ include $(TOP_DIR)/tools/functions.mk
 TOP_DIR_REAL:=$(realpath $(TOP_DIR))
 CURDIR_FROM_TOP=$(patsubst $(TOP_DIR_REAL)/%,%,$(CURDIR))
 
+# TODO this might not work in windows.. replace \ with \\ or so..
+DEFS += -DSOURCE_PATH_SIZE='(sizeof("$(TOP_DIR_REAL)"))'
+
 # OBJ_DIR ???LOCAL???
 OBJ_DIR_LOCAL=$(OBJ_DIR)/$(CURDIR_FROM_TOP)
 

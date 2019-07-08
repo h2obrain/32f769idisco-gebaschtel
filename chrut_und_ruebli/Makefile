@@ -13,8 +13,8 @@ LIB_SRC_DIRS += lib/support lib/drivers lib/gfx
  
 DEVICE   = stm32f769nih6
 
-#USE_LTO  = false
-#OPT      = -O0
+USE_LTO  = false
+OPT      = -Og
 
 #CFLAGS  += --specs=nosys.specs
 #CFLAGS  += -D_GNU_SOURCE
@@ -29,7 +29,11 @@ LDLIBS  += -lm
 LIB_SRC_DIRS += lib/freetype2
 LIB_SRC_DIRS += lib/harfbuzz
 LDLIBS       += -lstdc++ #_nano
+## freetype-gl  #
+LIB_SRC_DIRS += lib/freetype-gl
 ###
+
+
 
 OOCD           = openocd
 OOCD_INTERFACE = stlink-v2-1

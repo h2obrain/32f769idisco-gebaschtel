@@ -10,3 +10,6 @@
 [submodule "lib/harfbuzz/harfbuzz"]
 	path = lib/harfbuzz/harfbuzz
 	url = https://github.com/harfbuzz/harfbuzz.git
+[submodule "lib/freetype-gl/freetype-gl"]
+	path = lib/freetype-gl/freetype-gl
+	url = https://github.com/h2obrain/freetype-gl.git

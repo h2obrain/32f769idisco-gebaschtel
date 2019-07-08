@@ -2,6 +2,7 @@
 TOP_DIR ?=.
 
 HB_DIR  ?=$(MKF_DIR)/harfbuzz
+HB_DIR  :=$(HB_DIR)
 
 include $(HB_DIR)/src/Makefile.sources
 
@@ -23,7 +24,6 @@ HB_SRCS += $(filter %.cc, $(HB_FT_sources))
 HB_INCS := $(addprefix $(HB_DIR)/src/,$(sort $(HB_INCS)))
 HB_SRCS := $(addprefix $(HB_DIR)/src/,$(sort $(HB_SRCS)))
 
-HB_FOLDER   :=$(HB_FOLDER)
 HB_INCLUDES := $(HB_INCLUDES)
 HB_DEFS     := $(HB_DEFS)
 
