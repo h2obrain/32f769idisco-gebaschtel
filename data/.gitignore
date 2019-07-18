@@ -1,1 +1,2 @@
-*.h
+include/**/*.h
+src/**/*.c

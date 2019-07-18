@@ -221,22 +221,21 @@ int harfbuzz_test(dma2d_pixel_buffer_t *surface) {
 	assert(!harfbuzz_testx(
 			surface, ptSize, device_hdpi, device_vdpi,
 			ft_library,
-			DejaVuSerif_ttf,sizeof(DejaVuSerif_ttf),
-//			"Ленивый рыжий кот-hâãä?fi",
-			LID_LATIN,
+			DejaVuSerif_ttf,DejaVuSerif_ttf_size,
+			"Ленивый рыжий кот-hâãä?fi",
 			HB_DIRECTION_LTR, "en", HB_SCRIPT_LATIN
 		));
 	assert(!harfbuzz_testx(
 			surface, ptSize, device_hdpi, device_vdpi,
 			ft_library,
-			amiri_regular_ttf,sizeof(amiri_regular_ttf),
+			amiri_regular_ttf,amiri_regular_ttf_size,
 			"كسول الزنجبيل القط",
 			HB_DIRECTION_RTL, "ar", HB_SCRIPT_ARABIC
 		));
 	assert(!harfbuzz_testx(
 			surface, ptSize, device_hdpi, device_vdpi,
 			ft_library,
-			fireflysung_nano_ttf,sizeof(fireflysung_nano_ttf),
+			fireflysung_nano_ttf,fireflysung_nano_ttf_size,
 			"懶惰的姜貓",
 			HB_DIRECTION_TTB, "cn", HB_SCRIPT_HAN
 		));

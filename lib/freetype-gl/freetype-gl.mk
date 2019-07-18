@@ -6,16 +6,23 @@ FTGL_DIR ?=$(MKF_DIR)/freetype-gl/harfbuzz
 FTGL_DIR :=$(FTGL_DIR)
 
 FTGL_INCLUDES += -I$(FTGL_DIR) 
+FTGL_DEFS += -DFREETYPE_GL_NOGL
 
 FTGL_SRCS += platform.c
+FTGL_SRCS += vector.c
+FTGL_SRCS += utf8-utils.c
 FTGL_SRCS += freetype-gl-err.c
 FTGL_SRCS += texture-atlas.c
 FTGL_SRCS += texture-font.c
+FTGL_SRCS += distance-field.c edtaa3func.c
 
 FTGL_INCS += platform.h
+FTGL_INCS += utf8-utils.h
+FTGL_INCS += vector.h
 FTGL_INCS += freetype-gl-err.h freetype-gl-errdef.h
 FTGL_INCS += texture-atlas.h
 FTGL_INCS += texture-font.h
+FTGL_INCS += distance-field.h edtaa3func.h
 
 FTGL_INCLUDES := $(FTGL_INCLUDES)
 FTGL_DEFS     := $(FTGL_DEFS)

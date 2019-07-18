@@ -1,7 +1,7 @@
 /*
- * harfbuzz_test.h
+ * hbftgl-test.h
  *
- *  Created on: 23 Jun 2019
+ *  Created on: 18 Jul 2019
  *      Author: h2obrain
  */
 

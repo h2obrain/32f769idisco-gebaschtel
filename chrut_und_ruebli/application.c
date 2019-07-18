@@ -44,10 +44,15 @@
 //#define DMA2D_SIMPLE
 //#define WINDOWING
 //#define SLED
-#define HARFBUZZ
+//#define HARFBUZZ
+#define HBFTGL
 
 #ifdef HARFBUZZ
 #include "harfbuzz_test.h"
+#endif
+
+#ifdef HBFTGL
+#include "hbftgl-test.h"
 #endif
 
 /**
@@ -313,6 +318,51 @@ int main(void)
 //		}
 //		alpha = (alpha / 2 + 1) & 0xff000000;
 //	}
+
+#ifdef HBFTGL
+	display_ltdc_config_begin();
+	display_ltdc_config_layer(DISPLAY_LAYER_1, false);
+	//display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 0,0,640,480);
+	display_ltdc_config_end();
+	/* Give ltdc time to update its shadow registers! */
+	while (!display_ltdc_config_ready());
+	display_update();
+
+	/* Read back the window settings.. */
+	dma2d_pixel_buffer_t pxdst;
+	display_ltdc_config_begin();
+	display_ltdc_set_background_color(0x22,0x22,0x22);
+//	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_1, &pxdst_layer1);
+	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_2, &pxdst);
+	display_ltdc_config_end();
+
+	gfx_init(layers[1], pxdst.width,pxdst.height);
+
+	dma2d_fill(
+			&pxdst,
+			0, //0xffffffff,
+			0,0, pxdst.width,pxdst.height
+		);
+	while (!display_ltdc_config_ready());
+	display_update();
+
+	hbftgl_test_init();
+#define REFRESH_RATE 10
+	uint64_t timeout = mtime();
+	while (1) {
+		if (display_ready()) {
+			uint64_t time = mtime();
+			if (timeout<=time) {
+				timeout += 1000/REFRESH_RATE;
+				if (timeout<=time) timeout = time + 1000/REFRESH_RATE;
+				update_led_counter();
+				hbftgl_test_loop(&pxdst, 0x00ffffff);
+				display_update();
+			}
+		}
+	}
+#endif
+
 
 #ifdef HARFBUZZ
 	display_ltdc_config_begin();

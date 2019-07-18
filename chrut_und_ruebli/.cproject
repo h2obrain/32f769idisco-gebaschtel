@@ -45,6 +45,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/chrut_und_ruebli/lib/harfbuzz/harfbuzz/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/chrut_und_ruebli/lib/freetype2/config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/chrut_und_ruebli/lib/freetype2/freetype2/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/chrut_und_ruebli/lib/freetype-gl/freetype-gl/harfbuzz}&quot;"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.preprocessor.def.symbols.1738636096" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32F7"/>
@@ -92,6 +93,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/chrut_und_ruebli/lib/harfbuzz/harfbuzz/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/chrut_und_ruebli/lib/freetype2/config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/chrut_und_ruebli/lib/freetype2/freetype2/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/chrut_und_ruebli/lib/freetype-gl/freetype-gl/harfbuzz}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1712884334" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
