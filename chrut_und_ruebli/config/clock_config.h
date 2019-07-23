@@ -22,9 +22,12 @@
 #include <libopencm3/stm32/rcc.h>
 
 #define HSE_FREQUENCY_MHZ 25
-#define CLOCK_SETUP rcc_3v3[RCC_CLOCK_3V3_216MHZ]
+//#define CLOCK_SETUP rcc_3v3[RCC_CLOCK_3V3_216MHZ]
 //#define CLOCK_SETUP rcc_3v3[RCC_CLOCK_3V3_168MHZ]
 //#define CLOCK_SETUP rcc_3v3[RCC_CLOCK_3V3_120MHZ]
+
+extern const struct rcc_clock_scale rcc_3v3_200MHz;
+#define CLOCK_SETUP rcc_3v3_200MHz
 
 #endif
 

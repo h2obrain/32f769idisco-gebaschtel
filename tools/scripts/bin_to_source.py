@@ -31,11 +31,6 @@ def bin_to_array(binfile, hdir=None,hfile=None, cfile=None,overwrite=False):
 	
 	cname = re.sub(r'(^[^a-zA-Z_])|([^a-zA-Z_\d])',"_",name)
 	cc = 16
-	with open(hfile,"w") as f:
-		f.write("#include <stdlib.h>\n"
-				"#include <stdint.h>\n"
-				"extern const uint8_t {}[] __attribute__((__aligned__(8)));\n"
-				"extern const size_t {}_size;\n".format(cname,cname))
 	with open(cfile,"w") as f:
 		with open(binfile, "rb") as ff:
 			f.write('#include "{}"\n'
@@ -56,6 +51,11 @@ def bin_to_array(binfile, hdir=None,hfile=None, cfile=None,overwrite=False):
 					"}};\n"
 					"const size_t {}_size = sizeof({});\n".format(cname,cname)
 				)
+	with open(hfile,"w") as f:
+		f.write("#include <stdlib.h>\n"
+				"#include <stdint.h>\n"
+				"extern const uint8_t {}[] __attribute__((__aligned__(8)));\n"
+				"extern const size_t {}_size;\n".format(cname,cname))
 	
 if __name__=="__main__":
 	#for binfile in argv[1:]: bin_to_array(binfile)

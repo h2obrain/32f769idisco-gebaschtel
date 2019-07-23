@@ -47,6 +47,10 @@
 //#define HARFBUZZ
 #define HBFTGL
 
+#ifdef SLED
+#include <sled.h>
+#endif
+
 #ifdef HARFBUZZ
 #include "harfbuzz_test.h"
 #endif
@@ -181,10 +185,6 @@ uint32_t update_led_counter() {
 uint8_t gebaschtel_out[100*100*4]={0};
 #endif
 
-#ifdef SLED
-#include <sled.h>
-#endif
-
 #ifdef WINDOWING
 static inline
 int16_t bounce_add(int16_t v,int16_t *d,int16_t w) {
@@ -206,6 +206,7 @@ int16_t bounce_add(int16_t v,int16_t *d,int16_t w) {
 
 
 #include <libopencm3/cm3/mpu.h>
+void st_setup(void);
 
 static
 void preinit(void) {
@@ -244,8 +245,27 @@ void preinit(void) {
 	asm("dsb");
 	asm("isb");
 
+	msleep(1);
+
 	/* setup sdram */
-	sdram_init();
+//	st_setup();
+//	sdram_init();
+	sdram_init_custom(
+			SDRAM_BANK1,
+			32, 12,8,
+			(struct sdram_timing) {
+				.trcd = 2,  /* RCD Delay */
+				.trp  = 2,  /* RP Delay */
+				.twr  = 2,  /* Write Recovery Time */
+				.trc  = 7,  /* Row Cycle Delay */
+				.tras = 4,  /* Self Refresh Time */
+				.txsr = 7,  /* Exit Self Refresh Time */
+				.tmrd = 2,  /* Load to Active Delay */
+			},
+			3,
+			true, false, 1
+		);
+
 	uint64_t ram_clear_time = mtime();
 	memset((void *)SDRAM1_BASE_ADDRESS, 0x00, SDRAM_SIZE);
 	ram_clear_time = mtime() - ram_clear_time;
@@ -320,21 +340,21 @@ int main(void)
 //	}
 
 #ifdef HBFTGL
-	display_ltdc_config_begin();
+	display_ltdc_config_access_begin();
 	display_ltdc_config_layer(DISPLAY_LAYER_1, false);
 	//display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 0,0,640,480);
-	display_ltdc_config_end();
+	display_ltdc_config_access_end();
 	/* Give ltdc time to update its shadow registers! */
 	while (!display_ltdc_config_ready());
 	display_update();
 
 	/* Read back the window settings.. */
 	dma2d_pixel_buffer_t pxdst;
-	display_ltdc_config_begin();
+	display_ltdc_config_access_begin();
 	display_ltdc_set_background_color(0x22,0x22,0x22);
 //	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_1, &pxdst_layer1);
 	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_2, &pxdst);
-	display_ltdc_config_end();
+	display_ltdc_config_access_end();
 
 	gfx_init(layers[1], pxdst.width,pxdst.height);
 
@@ -347,7 +367,7 @@ int main(void)
 	display_update();
 
 	hbftgl_test_init();
-#define REFRESH_RATE 10
+#define REFRESH_RATE 100
 	uint64_t timeout = mtime();
 	while (1) {
 		if (display_ready()) {
@@ -356,7 +376,20 @@ int main(void)
 				timeout += 1000/REFRESH_RATE;
 				if (timeout<=time) timeout = time + 1000/REFRESH_RATE;
 				update_led_counter();
-				hbftgl_test_loop(&pxdst, 0x00ffffff);
+				static uint32_t c = 0;
+				static const uint32_t col[] = {
+					0xffc5d9,
+					0xc2f2d0,
+					0xfdf5c9,
+					0xffcb85,
+					0x6b3e26
+				};
+//				if (!c) {
+				dma2d_fill(&pxdst, 0, 0,0, pxdst.width,pxdst.height);
+				hbftgl_test_loop(&pxdst, col[c]);
+				dma2d_wait_complete();
+//				}
+				if (c==sizeof(col)/sizeof(col[0])-1) {c=0;} else {c++;}
 				display_update();
 			}
 		}
@@ -365,21 +398,21 @@ int main(void)
 
 
 #ifdef HARFBUZZ
-	display_ltdc_config_begin();
+	display_ltdc_config_access_begin();
 	display_ltdc_config_layer(DISPLAY_LAYER_1, false);
 	//display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 0,0,640,480);
-	display_ltdc_config_end();
+	display_ltdc_config_access_end();
 	/* Give ltdc time to update its shadow registers! */
 	while (!display_ltdc_config_ready());
 	display_update();
 
 	/* Read back the window settings.. */
 	dma2d_pixel_buffer_t pxdst;
-	display_ltdc_config_begin();
+	display_ltdc_config_access_begin();
 	display_ltdc_set_background_color(0x22,0x22,0x22);
 //	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_1, &pxdst_layer1);
 	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_2, &pxdst);
-	display_ltdc_config_end();
+	display_ltdc_config_access_end();
 
 	gfx_init(layers[1], pxdst.width,pxdst.height);
 
@@ -430,10 +463,10 @@ int main(void)
 	/*
 	 * DMA2D debugging
 	 */
-	display_ltdc_config_begin();
+	display_ltdc_config_access_begin();
 	display_ltdc_config_layer(DISPLAY_LAYER_1, false);
 	//display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 0,0,640,480);
-	display_ltdc_config_end();
+	display_ltdc_config_access_end();
 
 	/* Give ltdc time to update its shadow registers! */
 	while (!display_ltdc_config_ready());
@@ -441,11 +474,11 @@ int main(void)
 
 	/* Read back the window settings.. */
 	dma2d_pixel_buffer_t pxdst;
-	display_ltdc_config_begin();
+	display_ltdc_config_access_begin();
 	display_ltdc_set_background_color(0x22,0x22,0x22);
 //	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_1, &pxdst_layer1);
 	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_2, &pxdst);
-	display_ltdc_config_end();
+	display_ltdc_config_access_end();
 
 	gfx_init(layers[1], pxdst.width,pxdst.height);
 
@@ -467,11 +500,11 @@ int main(void)
 	/*
 	 * DMA2D debugging
 	 */
-	display_ltdc_config_begin();
+	display_ltdc_config_access_begin();
 	display_ltdc_config_layer(DISPLAY_LAYER_1, false);
 //	display_ltdc_config_windowing_xywh(DISPLAY_LAYER_1, 0,0,100,100);
 	display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 2,2,796,476);
-	display_ltdc_config_end();
+	display_ltdc_config_access_end();
 
 	/* Give ltdc time to update its shadow registers! */
 	while (!display_ltdc_config_ready());
@@ -479,11 +512,11 @@ int main(void)
 
 	/* Read back the window settings.. */
 	dma2d_pixel_buffer_t pxsrc_fg, pxsrc_bg, pxdst, pxdst_layer1;
-	display_ltdc_config_begin();
+	display_ltdc_config_access_begin();
 	display_ltdc_set_background_color(0xff,0xff,0xff);
 	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_1, &pxdst_layer1);
 	dma2d_setup_ltdc_pixel_buffer(DISPLAY_LAYER_2, &pxdst);
-	display_ltdc_config_end();
+	display_ltdc_config_access_end();
 
 	gfx_init(layers[1], pxdst.width,pxdst.height);
 
@@ -528,9 +561,9 @@ int main(void)
 	/* Ram is too slow for 2 layers in 60Hz video mode (see wait_cycles below) */
 	if (display_get_dsi_mode()!=DSI_MODE_ADAPTED_COMMAND_MODE) {
 		while (!display_ltdc_config_ready());
-		display_ltdc_config_begin();
+		display_ltdc_config_access_begin();
 		display_ltdc_config_layer(DISPLAY_LAYER_1, false);
-		display_ltdc_config_end();
+		display_ltdc_config_access_end();
 	}
 
 	/* play with windows */
@@ -543,12 +576,12 @@ int main(void)
 	yd=5;
 	uint32_t (*layer1_data)[w] = (void *)layers[0];
 	uint32_t (*layer2_data)[w] = (void *)layers[1];
-	display_ltdc_config_begin();
+	display_ltdc_config_access_begin();
 	display_ltdc_config_windowing_xywh(DISPLAY_LAYER_1, x,y, w,h);
 	display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 800-w-x,480-h-y, w,h);
 	/* Ram is fast enough for two small windowed layers */
 	display_ltdc_config_layer(DISPLAY_LAYER_1, true);
-	display_ltdc_config_end();
+	display_ltdc_config_access_end();
 
 #define REFRESH_RATE 30
 	uint64_t timeout = mtime();
@@ -571,10 +604,10 @@ int main(void)
 					x = bounce_add(x,&xd,800-w);
 					y = bounce_add(y,&yd,480-h);
 
-					display_ltdc_config_begin();
+					display_ltdc_config_access_begin();
 					display_ltdc_config_windowing_xywh(DISPLAY_LAYER_1, x,y, w,h);
 					display_ltdc_config_windowing_xywh(DISPLAY_LAYER_2, 800-w-x,480-h-y, w,h);
-					display_ltdc_config_end();
+					display_ltdc_config_access_end();
 
 					display_update();
 				}

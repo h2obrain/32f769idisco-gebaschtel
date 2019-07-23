@@ -186,8 +186,10 @@ void display_init(
 			break;
 		case DISPLAY_COLOR_CODING_RGB888 :
 		case DISPLAY_COLOR_CODING_ARGB8888 :
-		default :
 			dsi_color_coding = DSI_COLOR_CODING_RGB888;
+			break;
+		default :
+			assert(0); dsi_color_coding=0;
 			break;
 	}
 
@@ -207,6 +209,7 @@ void display_init(
 			break;
 		default :
 			assert("invalid tft orientation!" && 0);
+			HACT = VACT = 0;
 			return;
 	}
 	/*
@@ -252,6 +255,7 @@ void display_init(
 					null_packet_size  = 0xfff; // 0
 					break;
 				default :
+					assert(0); video_mode_type=video_packet_size=num_chunks=null_packet_size=0;
 					break;
 			}
 			dsi_video_mode_config(
@@ -330,6 +334,11 @@ void display_init(
 #endif
 			/* Enable the End of Refresh interrupt */
 			DSI_WIER |= DSI_WIER_ERIE;
+			break;
+
+		default :
+			assert("invalid tft mode!" && 0);
+			HSA=HBP=HACT=HFP = 0;
 			break;
 	}
 
@@ -730,7 +739,12 @@ void display_update() {
 bool display_ltdc_config_ready() {
 	return !LTDC_SRCR_IS_RELOADING();
 }
-void display_ltdc_config_begin() {
+static bool config_mode = false;
+bool display_ltdc_config_access_possible() {
+	return config_mode;
+}
+void display_ltdc_config_access_begin() {
+	if (config_mode) return;
 	switch (display_get_dsi_mode()) {
 		case DSI_MODE_VIDEO_SYNC_PULSES :
 		case DSI_MODE_VIDEO_SYNC_EVENTS :
@@ -746,8 +760,9 @@ void display_ltdc_config_begin() {
 //			while (!display_ready());
 			break;
 	}
+	config_mode = true;
 }
-void display_ltdc_config_end() {
+void display_ltdc_config_access_end() {
 	switch (display_get_dsi_mode()) {
 		case DSI_MODE_VIDEO_SYNC_PULSES :
 		case DSI_MODE_VIDEO_SYNC_EVENTS :
@@ -758,11 +773,13 @@ void display_ltdc_config_end() {
 			ltdc_reload(LTDC_SRCR_RELOAD_VBR);
 			break;
 		case DSI_MODE_ADAPTED_COMMAND_MODE :
+			if (!config_mode) assert("Not in config mode!" && 0);
 			ltdc_reload(LTDC_SRCR_RELOAD_IMR);
 			while (!display_ltdc_config_ready());
 			/* Enable the DSI wrapper */
 			DSI_WCR |= DSI_WCR_DSIEN;
 			wait_cycles(10);
+			config_mode = false;
 			break;
 	}
 }

@@ -3,25 +3,25 @@ TOP_DIR =..
 
 # Find source files for different file endings
 # in a path relative to this Makefile
-SOURCES_DIRS += .
+SOURCES_DIRS += . config
 INCLUDE_DIRS += config
 
 # paths to search for lib-related .mk-files (relative to the top-dir)
 LIB_SRC_DIRS += data
 LIB_SRC_DIRS += lib/support lib/drivers lib/gfx
-#LIB_SRC_DIRS += lib/sled_hijack
+LIB_SRC_DIRS += lib/sled_hijack
  
 DEVICE   = stm32f769nih6
 
 USE_LTO  = false
-OPT      = -Og
+#OPT      = -Og
 
 #CFLAGS  += --specs=nosys.specs
 #CFLAGS  += -D_GNU_SOURCE
 
 #DEFS    += -DVIDEO_MEMORY_ADDRESS=0xc0000000U -DVIDEO_MEMORY_SIZE="(2*800*480*sizeof(uint32_t))"
 #DEFS    += -DMALLOC_AREA_START="(VIDEO_MEMORY_ADDRESS+VIDEO_MEMORY_SIZE)" -DMALLOC_AREA_SIZE="(0x1000000U-VIDEO_MEMORY_SIZE)" #0x400000U
-DEFS    += -DMALLOC_AREA_START=0xc0000000U -DMALLOC_AREA_SIZE=0x1000000U #0x400000U
+DEFS    += -DMALLOC_AREA_START=0xc0000000U -DMALLOC_AREA_SIZE=0x1000000U
 
 LDLIBS  += -lm
 
@@ -32,7 +32,6 @@ LDLIBS       += -lstdc++ #_nano
 ## freetype-gl  #
 LIB_SRC_DIRS += lib/freetype-gl
 ###
-
 
 
 OOCD           = openocd

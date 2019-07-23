@@ -12,6 +12,7 @@
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/stm32/dma2d.h>
 #include <drivers/dsi_types.h>
+#include <drivers/display.h>
 
 #define DMA2D_CLOCKS \
 	RCC_DMA2D

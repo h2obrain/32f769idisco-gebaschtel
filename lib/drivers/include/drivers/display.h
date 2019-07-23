@@ -53,8 +53,9 @@ bool display_ready(void);
 void display_update(void);
 
 bool display_ltdc_config_ready(void);
-void display_ltdc_config_begin(void);
-void display_ltdc_config_end(void);
+bool display_ltdc_config_access_possible(void);
+void display_ltdc_config_access_begin(void);
+void display_ltdc_config_access_end(void);
 void display_ltdc_set_background_color(uint8_t r, uint8_t g, uint8_t b);
 void display_ltdc_config_layer(
 		display_layer_t layer,

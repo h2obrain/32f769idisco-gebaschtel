@@ -33,7 +33,7 @@
 #define SDRAM_TCDL	(1 - 1)
 #define SDRAM_TRDL	NS2CLK(12)
 #define SDRAM_TBDL	(1 - 1)
-#define SDRAM_TREF	(NS2CLK(64000000 / 8192) - 20)
+//#define SDRAM_TREF	(NS2CLK(64000000 / 8192) - 20)
 #define SDRAM_TCCD	(1 - 1)
 #define SDRAM_TXSR	SDRAM_TRFC	/* Row cycle time after precharge */
 #define SDRAM_TMRD	1		    /* Page 10, Mode Register Set */
@@ -65,9 +65,15 @@ sdram_init(void) {
 				.tmrd = SDRAM_TMRD,  /* Load to Active Delay */
 			},
 			3,
-			false, false, 2
+			false, false, 1
 		);
 }
+
+#define FMC_BUSY_WAIT()		do { \
+		__asm__ __volatile__ ("dsb" : : : "memory"); \
+		while (FMC_SDSR & FMC_SDSR_BUSY); \
+	} while(0);
+
 void
 sdram_init_custom(
 		enum fmc_sdram_bank sdram_bank,
@@ -83,9 +89,11 @@ sdram_init_custom(
 
 	cr_tmp = cmd_tmp = 0;
 
-	cr_tmp |= FMC_SDCR_RPIPE_1CLK;
-	cr_tmp |= FMC_SDCR_SDCLK_2HCLK;
-	cr_tmp |= FMC_SDCR_NB4; // sdram has 4 internal banks
+//	cr_tmp |= FMC_SDCR_RPIPE_NONE;
+	cr_tmp |= FMC_SDCR_RPIPE_1CLK;  // 1 ahb-clk read delay
+//	cr_tmp |= FMC_SDCR_RPIPE_2CLK;  // 2 ahb-clk read delay
+	cr_tmp |= FMC_SDCR_SDCLK_2HCLK; // ahb_clk/2
+	cr_tmp |= FMC_SDCR_NB4;         // sdram has 4 internal banks
 	switch (cas_latency) {
 		case 2:
 			cr_tmp  |= FMC_SDCR_CAS_2CYC;
@@ -164,8 +172,10 @@ sdram_init_custom(
 		assert(0);
 	}
 	if ((sdram_bank==SDRAM_BANK2)||(sdram_bank==SDRAM_BOTH_BANKS)) {
-		FMC_SDCR2 = cr_tmp;
-		FMC_SDTR2 = tr_tmp;
+		FMC_SDCR2 = cr_tmp & ~FMC_SDCR_DNC_MASK;
+		FMC_SDTR2 = tr_tmp & ~FMC_SDCR_DNC_MASK;
+	} else {
+		FMC_SDCR2 = 0;
 	}
 
 	/* Now start up the Controller per the manual
@@ -176,10 +186,14 @@ sdram_init_custom(
 	 */
 	sdram_command(sdram_bank, SDRAM_CLK_CONF, 1, 0);
 	msleep_loop(1); /* sleep at least 200uS */
+	FMC_BUSY_WAIT();
 	sdram_command(sdram_bank, SDRAM_PALL, 1, 0);
 	msleep_loop(1); /* ? sleep >100uS */
-	sdram_command(sdram_bank, SDRAM_AUTO_REFRESH, 7, 0);
+	FMC_BUSY_WAIT();
+//	sdram_command(sdram_bank, SDRAM_AUTO_REFRESH, 7, 0);
+	sdram_command(sdram_bank, SDRAM_AUTO_REFRESH, 8, 0);
 	msleep_loop(1); /* ?? sleep >100uS */
+	FMC_BUSY_WAIT();
 
 	cmd_tmp |= SDRAM_MODE_BURST_TYPE_SEQUENTIAL |
 	           SDRAM_MODE_OPERATING_MODE_STANDARD;
@@ -206,17 +220,24 @@ sdram_init_custom(
 			break;
 	}
 	sdram_command(sdram_bank, SDRAM_LOAD_MODE, 1, cmd_tmp);
-
-
 	msleep_loop(1); /* ?? sleep >100uS */
-	sdram_command(sdram_bank, SDRAM_NORMAL, 0, 0);
+	FMC_BUSY_WAIT();
+
+//	sdram_command(sdram_bank, SDRAM_NORMAL, 0, 0);
+//	msleep_loop(1); /* ?? sleep >100uS */
+//	FMC_BUSY_WAIT();
 
 	/*
 	 * set the refresh counter to insure we kick off an
 	 * auto refresh often enough to prevent data loss.
 	 */
-//	FMC_SDRTR = 683; // 64mbit
-//	FMC_SDRTR = 683; // 512mbit // 64ms/(1<<13)*180MHz/2-20
-	FMC_SDRTR = 683; // 128mbit // 64ms/(1<<13)*216MHz/2-20
-	/* and Poof! a 16 megabytes of ram shows up in the address space */
+//	FMC_SDRTR = (683 << FMC_SDRTR_COUNT_SHIFT) & FMC_SDRTR_COUNT_MASK; // 64mbit
+//	FMC_SDRTR = (683 << FMC_SDRTR_COUNT_SHIFT) & FMC_SDRTR_COUNT_MASK; // 512mbit // 64ms/(1<<13)*180MHz/2-20
+//	FMC_SDRTR = (824 << FMC_SDRTR_COUNT_SHIFT) & FMC_SDRTR_COUNT_MASK; // 128mbit // 64ms/(1<<13)*216MHz/2-20
+//	FMC_SDRTR = (1292 << FMC_SDRTR_COUNT_SHIFT) & FMC_SDRTR_COUNT_MASK; // st, 128mbit
+	FMC_SDRTR = (1241 << FMC_SDRTR_COUNT_SHIFT) & FMC_SDRTR_COUNT_MASK; // st, 128mbit // 100ms/(1<<13)*200MHz/2-20
+	/* and Poof! a some megabytes of ram shows up in the address space */
+
+	//...
+	FSMC_BCR1 = 0x000030d2;
 }

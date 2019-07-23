@@ -84,6 +84,7 @@ void spanner_wo(int y, int count, const FT_Span* spans, void *user) {
    This might be optimized if one does rmw only for some values of x.
    But since the whole buffer has to be rw anyway, and the previous value
    is probably still in the cache, there's little point to. */
+__attribute((unused))
 static
 void spanner_rw(int y, int count, const FT_Span* spans, void *user) {
 	spanner_baton_t *baton = (spanner_baton_t *) user;

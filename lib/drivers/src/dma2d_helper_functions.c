@@ -41,6 +41,9 @@ void dma2d_isr(void) {
 
 /* ltdc interoperability */
 void dma2d_setup_ltdc_pixel_buffer(display_layer_t layer, dma2d_pixel_buffer_t *pxbuf) {
+	bool local_config = !display_ltdc_config_access_possible();
+	if (local_config) display_ltdc_config_access_begin();
+
 	pxbuf->buffer = (void *)ltdc_get_fbuffer_address(layer);
 
 	uint32_t window_x0,window_x1;
@@ -131,6 +134,8 @@ void dma2d_setup_ltdc_pixel_buffer(display_layer_t layer, dma2d_pixel_buffer_t *
 			assert("Unsupported destination color format");
 			break;
 	}
+
+	if (local_config) display_ltdc_config_access_end();
 }
 
 /* color and blending stuff */
