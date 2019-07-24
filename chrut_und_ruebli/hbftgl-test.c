@@ -42,32 +42,51 @@ dma2d_pixel_buffer_t atlas_surface;
 
 #define NUM_FONTS (sizeof(fonts)/sizeof(texture_font_t *))
 static texture_font_t *font_lat;
-static texture_font_t *fonts[14];
+static texture_font_t *font_lat_huge;
+static texture_font_t *fonts[15];
 
 //#define PRELOAD_GLYPHS
 
 dma2d_pixel_buffer_t *hbftgl_test_init() {
-	atlas = texture_atlas_new( 300, 330, 1 );
+	atlas = texture_atlas_new( 300, 480, 1 );
 
-	printf("Creating latin font size: %zu\n", 20);
-	font_lat = texture_font_new_from_memory(atlas, 20,72,1, DejaVuSerif_ttf,DejaVuSerif_ttf_size, language_lat);
-	font_lat->mode = RENDER_NORMAL;
-	font_lat->hinting = false;
-	font_lat->filtering = false;
+	float dpi = 216; // 72 216 233.238
+
+	float font_size_pt = 16;
+	printf("Creating latin font size: %.1f\n", font_size_pt);
+	font_lat = texture_font_new_from_memory(atlas, font_size_pt,dpi,100, DejaVuSerif_ttf,DejaVuSerif_ttf_size, language_lat);
+	font_lat->rendermode = RENDER_OUTLINE_EDGE;
+	font_lat->outline_thickness = 0.4f;
+//	font_lat->hinting = false;
+//	font_lat->filtering = false;
 #ifdef PRELOAD_GLYPHS
 	texture_font_load_glyphs(font_lat, text_lat);
+#else
+	// TODO: for some reason, a single char needs to be loaded before copying the font..
+	texture_font_load_glyph(font_lat, text_lat);
 #endif
-	printf("Creating font size: %zu\n", 8);
-	fonts[0] = texture_font_new_from_memory(atlas, 8,72,1, amiri_regular_ttf,amiri_regular_ttf_size, language_ar);
-//	fonts[0] = texture_font_new_from_file(atlas, 8, font_filename, language);
-	fonts[0]->mode = RENDER_NORMAL;
-	fonts[0]->hinting = false;
-	fonts[0]->filtering = false;
+	printf("Creating font size: %.1f\n", 50.0f);
+	font_lat_huge = texture_font_clone(font_lat, 50.0f);
+	texture_font_load_glyph(font_lat_huge, "@");
+
+	font_size_pt = 1;
+	printf("Creating font size: %.1f\n", font_size_pt);
+	fonts[0] = texture_font_new_from_memory(atlas, font_size_pt,dpi,1, amiri_regular_ttf,amiri_regular_ttf_size, language_ar);
+//	fonts[0] = texture_font_new_from_file(atlas, font_size_pt, font_filename, language);
+	fonts[0]->rendermode = RENDER_NORMAL;
+//	fonts[0]->hinting = false;
+//	fonts[0]->filtering = false;
+#ifdef PRELOAD_GLYPHS
 	texture_font_load_glyphs(fonts[0], text_ar);
+#else
+	// TODO: for some reason, a single char needs to be loaded before copying the font..
+	texture_font_load_glyph(fonts[0], text_ar);
+#endif
 	for (size_t i=1; i<NUM_FONTS; i++) {
-		printf("Creating font size: %zu\n", 8+i);
+		font_size_pt += 0.3f;
+		printf("Creating font size: %.1f\n", font_size_pt);
 //		fonts[i] = texture_font_new_from_file(atlas, 12+i, font_filename, language);
-		fonts[i] = texture_font_clone(fonts[0], 8+i);
+		fonts[i] = texture_font_clone(fonts[0], font_size_pt);
 #ifdef PRELOAD_GLYPHS
 		texture_font_load_glyphs(fonts[i], text_ar );
 #endif
@@ -78,11 +97,16 @@ dma2d_pixel_buffer_t *hbftgl_test_init() {
 		.buffer = atlas->data,
 		.width  = atlas->width,
 		.height = atlas->height,
-		.in.pixel.bitsize = 8,
-		.in.pixel.format  = DMA2D_xPFCCR_CM_A8,
-		.in.pixel.alpha_mode.color = 0xffffff,
-		.out.pixel.bytesize = 0,// out is not supported!
-		.out.pixel.format = 0,
+		.in = {
+			.pixel = {
+					.bitsize = 8,
+					.format  = DMA2D_xPFCCR_CM_A8,
+					.alpha_mode = {
+							.color = 0xffffff,
+					},
+			},
+		},
+		.out = {{0}},// out is not supported!
 	};
 	return &atlas_surface;
 }
@@ -117,7 +141,7 @@ void hbftgl_test_loop(dma2d_pixel_buffer_t *render_surface, uint32_t color) {
 	static uint64_t last_time = 0;
 	static double fps = 0;
 	uint64_t time = mtime();
-	fps = 0.9*fps + 0.1*(1000.0/(time-last_time));
+	fps = /*0.9*fps + 0.1**/(1000.0/(time-last_time));
 	last_time = time;
 	char fps_buf[64];
 	sprintf(fps_buf, "%.1f fps", fps);
