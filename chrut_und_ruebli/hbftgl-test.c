@@ -26,19 +26,19 @@
 
 #include "data/texts/lorem_ipsum_dolor.h"
 
-const char *text_ar  = "صِف خَلقَ خَودِ كَمِثلِ الشَمسِ إِذ بَزَغَت — يَحظى الضَجيعُ بِها نَجلاءَ مِعطارِ";
-//const char *font_filename      = "fonts/amiri-regular.ttf";
-const char *language_ar           = "ar";
-const hb_direction_t direction_ar = HB_DIRECTION_RTL;
-const hb_script_t script_ar       = HB_SCRIPT_ARABIC;
+static const char *text_ar  = "صِف خَلقَ خَودِ كَمِثلِ الشَمسِ إِذ بَزَغَت — يَحظى الضَجيعُ بِها نَجلاءَ مِعطارِ";
+//static const char *font_filename      = "fonts/amiri-regular.ttf";
+static const char *language_ar           = "ar";
+static const hb_direction_t direction_ar = HB_DIRECTION_RTL;
+static const hb_script_t script_ar       = HB_SCRIPT_ARABIC;
 
-const char *text_lat = "moin! ffi möh?";
-const char *language_lat           = "en";
-const hb_direction_t direction_lat = HB_DIRECTION_LTR;
-const hb_script_t script_lat       = HB_SCRIPT_LATIN;
+static const char *text_lat = "moin! ffi möh?";
+static const char *language_lat           = "en";
+static const hb_direction_t direction_lat = HB_DIRECTION_LTR;
+static const hb_script_t script_lat       = HB_SCRIPT_LATIN;
 
-texture_atlas_t *atlas;
-dma2d_pixel_buffer_t atlas_surface;
+static texture_atlas_t *atlas;
+static dma2d_pixel_buffer_t atlas_surface;
 
 #define NUM_FONTS (sizeof(fonts)/sizeof(texture_font_t *))
 static texture_font_t *font_lat;
