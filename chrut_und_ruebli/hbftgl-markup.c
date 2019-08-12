@@ -66,17 +66,18 @@ void hbftgl_markup_init(dma2d_pixel_buffer_t *render_surface) {
 	markup_t reverse   = normal; reverse.foreground_color = black;
 								 reverse.background_color = white;
 								 //reverse.gamma = 1.0;
-	markup_t overline  = normal; overline.overline = 1;
-	markup_t underline = normal; underline.underline = 1;
+	markup_t overline  = normal; overline.overline = true;
+	markup_t underline = normal; underline.underline = true;
 	markup_t small     = normal; small.size = 8.0;
-								 small.outline = 1; small.outline_color = (gfx_color_t){.argb8888.c = 0xff11aaff};
-	markup_t big       = normal; big.size = 24.0;
-								 big.italic = 1;
-								 big.strikethrough = 1;
+								 small.outline = true; small.outline_color = (gfx_color_t){.argb8888.c = 0xff11aaff};
+	markup_t big       = normal; big.size = 30.0;
+								 big.italic = true;
+								 big.strikethrough = true;
 								 big.foreground_color = yellow;
-								 big.outline = 1; big.outline_color = (gfx_color_t){.argb8888.c = 0xff11aaff};
-	markup_t bold      = normal; bold.bold = 1; bold.family = DejaVuSerif;
-	markup_t italic    = normal; italic.italic = 1; italic.family = DejaVuSerif;
+								 big.overline = big.underline = true;
+								 big.outline = true; big.outline_color = (gfx_color_t){.argb8888.c = 0xff11aaff};
+	markup_t bold      = normal; bold.bold = true; bold.family = DejaVuSerif;
+	markup_t italic    = normal; italic.italic = true; italic.family = DejaVuSerif;
 	markup_t chinese   = normal; chinese.family = fireflysung_nano;
 								 chinese.size = 15.0;
 								 chinese.language = "cn";
@@ -112,25 +113,26 @@ void hbftgl_markup_init(dma2d_pixel_buffer_t *render_surface) {
 	text_buffer_printf( buffer, &pen,
 						&underline, "The",
 						&normal,    " Quick",
-						&big,       " brown ",
-						&reverse,   " fox \n",
-						&italic,    "jumps over ",
-						&bold,      "the lazy ",
-						&overline,  "dog.\n",
-						&small,     "Now is the time for all good people "
-									"to come to party.\n",
-						&italic,    "Ég get etið gler án þess að meiða mig.\n",
-						&math,      "ℕ ⊆ ℤ ⊂ ℚ ⊂ ℝ ⊂ ℂ\n",
-//						&normal,    "<ttb>",
-//						&chinese,  "私はガラスを食べられます。\nそれは私を傷つけません。\n",
-//						&chinese,  "私はガラス",
-//						&chinese_big,"を食べられ",
-//						&chinese,  "ます。\n",
-//						&chinese,  "bla\nblabla\nblablabla\n",
-//						&normal,    "</ttb>\n",
-						&normal,    "<rtl>",
-						&arabic,    "كسول الز123نجبيل القط",
-						&normal,    "</rtl>\n",
+						&big,       " bRown ",
+						&normal,    "\nThe Quick",
+//						&reverse,   " fox \n",
+//						&italic,    "jumps over ",
+//						&bold,      "the lazy ",
+//						&overline,  "dog.\n",
+//						&small,     "Now is the time for all good people "
+//									"to come to party.\n",
+//						&italic,    "Ég get etið gler án þess að meiða mig.\n",
+//						&math,      "ℕ ⊆ ℤ ⊂ ℚ ⊂ ℝ ⊂ ℂ\n",
+////						&normal,    "<ttb>",
+////						&chinese,  "私はガラスを食べられます。\nそれは私を傷つけません。\n",
+////						&chinese,  "私はガラス",
+////						&chinese_big,"を食べられ",
+////						&chinese,  "ます。\n",
+////						&chinese,  "bla\nblabla\nblablabla\n",
+////						&normal,    "</ttb>\n",
+//						&normal,    "<rtl>",
+//						&arabic,    "كسول الز123نجبيل القط",
+//						&normal,    "</rtl>\n",
 						NULL );
 
 //	/* display atlas */
